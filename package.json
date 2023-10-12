@@ -1,4 +1,17 @@
 {
+  "name": "lnpkg",
+  "version": "0.0.1",
+  "description": "Link local Node.js packages for local development.",
+  "homepage": "https://github.com/Arnesfield/lnpkg#readme",
+  "bugs": {
+    "url": "https://github.com/Arnesfield/lnpkg/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Arnesfield/lnpkg.git"
+  },
+  "license": "MIT",
+  "author": "Jefferson Rylee <rylee.jeff385@gmail.com>",
   "sideEffects": false,
   "type": "module",
   "exports": {
