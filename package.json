@@ -25,6 +25,9 @@
   "unpkg": "lib/index.umd.min.js",
   "module": "lib/index.mjs",
   "types": "lib/index.d.ts",
+  "bin": {
+    "lnpkg": "bin/cli.js"
+  },
   "files": [
     "lib"
   ],
