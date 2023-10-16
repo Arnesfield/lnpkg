@@ -3,8 +3,8 @@ import {
   PACKAGE_FILES_IGNORE,
   PACKAGE_FILES_INCLUDE
 } from '../constants/package.constants';
+import { PackageJson } from '../types/package.types';
 import { simplifyPaths } from '../utils/simplify-paths';
-import { PackageJson } from './package.types';
 
 /**
  * Get the `package.json` files.

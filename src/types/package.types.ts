@@ -1,3 +1,5 @@
+// NOTE: internal
+
 export interface PackageJson {
   name: string;
   files?: string[];

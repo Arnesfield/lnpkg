@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { PackageJson } from './package.types';
+import { PackageJson } from '../types/package.types';
 
 export async function readPackage(pkgJsonPath: string): Promise<PackageJson> {
   try {

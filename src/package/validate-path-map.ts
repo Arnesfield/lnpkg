@@ -1,6 +1,6 @@
 import path from 'path';
 import { PACKAGE_JSON } from '../constants/package.constants';
-import { PathMap } from '../core/core.types';
+import { PathMap } from '../types/core.types';
 import { lstat } from '../utils/fs.utils';
 
 export async function validatePathMap(

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { PackageFile } from './package.types';
+import { PackageFile } from '../types/package.types';
 
 export async function copyFile(file: PackageFile): Promise<void> {
   // ensure directory exists

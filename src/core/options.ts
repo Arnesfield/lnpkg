@@ -1,4 +1,4 @@
-import { LnPkgOptions, PathMap } from './core.types';
+import { LnPkgOptions, PathMap } from '../types/core.types';
 
 export interface NormalizedOptions {
   paths: PathMap[];

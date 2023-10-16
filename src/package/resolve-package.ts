@@ -1,6 +1,6 @@
 import path from 'path';
-import { PathMap } from '../core/core.types';
-import { ResolvedPackage } from './package.types';
+import { PathMap } from '../types/core.types';
+import { ResolvedPackage } from '../types/package.types';
 import { readPackage } from './read-package';
 import { resolvePackageFiles } from './resolve-package-files';
 import { validatePathMap } from './validate-path-map';

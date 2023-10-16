@@ -4,7 +4,7 @@ import path from 'path';
 import { copyFile, removeFile } from '../package/package-file';
 import { resolvePackage } from '../package/resolve-package';
 import { colors } from '../utils/colors';
-import { LnPkgOptions } from './core.types';
+import { LnPkgOptions } from '../types/core.types';
 import { normalizeOptions } from './options';
 
 export async function lnpkg(options: LnPkgOptions = {}): Promise<void> {
