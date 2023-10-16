@@ -4,20 +4,14 @@ import path from 'path';
 import { copyFile, removeFile } from '../package/package-file';
 import { resolvePackage } from '../package/resolve-package';
 import { colors } from '../utils/colors';
+import { LnPkgOptions } from './core.types';
+import { normalizeOptions } from './options';
 
-export interface LnPkgOptions {
-  target?: string;
-  clean?: boolean;
-}
-
-export async function lnpkg(
-  paths: string[],
-  options: LnPkgOptions = {}
-): Promise<void> {
-  // make sure paths are unique
-  const pkgPaths = Array.from(new Set(paths.map(value => path.resolve(value))));
+export async function lnpkg(options: LnPkgOptions = {}): Promise<void> {
+  // NOTE: assume resolved packages are consistent while processing occurs
+  const opts = normalizeOptions(options);
   const resolvedPkgs = await Promise.all(
-    pkgPaths.map(pkgPath => resolvePackage(pkgPath, options))
+    opts.paths.map(pathMap => resolvePackage(pathMap))
   );
 
   const cwd = process.cwd();
@@ -34,17 +28,6 @@ export async function lnpkg(
       relative.src,
       relative.dest
     );
-
-    if (resolved.src === resolved.dest) {
-      const error = Error('Cannot link to the same directory.');
-      console.error(
-        chalkTemplateStderr`%s: {bgRed error} {dim %s}`,
-        pkgName,
-        relative.src,
-        error
-      );
-      continue;
-    }
 
     const doneFiles: string[] = [];
     for (const file of resolved.files) {
