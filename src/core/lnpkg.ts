@@ -29,12 +29,16 @@ export async function lnpkg(options: LnPkgOptions = {}): Promise<void> {
       relative.dest
     );
 
-    const doneFiles: string[] = [];
     for (const file of resolved.files) {
       const filePath = path.relative(resolved.src, file.src);
       try {
         await (options.clean ? removeFile(file) : copyFile(file));
-        doneFiles.push(filePath);
+        console.log(
+          chalkTemplate`%s: {bgGray %s} {yellow %s}`,
+          pkgName,
+          options.clean ? 'clean' : 'copy',
+          filePath
+        );
       } catch (error) {
         console.error(
           chalkTemplateStderr`%s: {bgRed error} {yellow %s}`,
@@ -43,15 +47,6 @@ export async function lnpkg(options: LnPkgOptions = {}): Promise<void> {
           error
         );
       }
-    }
-
-    if (doneFiles.length > 0) {
-      console.log(
-        chalkTemplate`%s: {bgGray %s}`,
-        pkgName,
-        options.clean ? 'clean' : 'copy',
-        doneFiles.map(file => chalk.yellow(file)).join(', ')
-      );
     }
   }
 }
