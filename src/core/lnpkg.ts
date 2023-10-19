@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import chalkTemplate, { chalkTemplateStderr } from 'chalk-template';
 import path from 'path';
 import { copyFile, removeFile } from '../package/package-file';
 import { resolvePackage } from '../package/resolve-package';
@@ -17,16 +16,17 @@ export async function lnpkg(options: LnPkgOptions = {}): Promise<void> {
   const cwd = process.cwd();
   const color = colors();
   for (const resolved of resolvedPkgs) {
-    const pkgName = color().bold(resolved.package.name);
+    const pkgName = chalk[color()].bold(resolved.package.name);
     const relative = {
       src: path.relative(cwd, resolved.src),
       dest: path.relative(cwd, resolved.dest)
     };
     console.log(
-      chalkTemplate`%s: {dim %s} {red →} {dim %s}`,
+      '%s:',
       pkgName,
-      relative.src,
-      relative.dest
+      chalk.dim(relative.src),
+      chalk.red('→'),
+      chalk.dim(relative.dest)
     );
 
     for (const file of resolved.files) {
@@ -34,16 +34,17 @@ export async function lnpkg(options: LnPkgOptions = {}): Promise<void> {
       try {
         await (options.clean ? removeFile(file) : copyFile(file));
         console.log(
-          chalkTemplate`%s: {bgGray %s} {yellow %s}`,
+          '%s:',
           pkgName,
-          options.clean ? 'clean' : 'copy',
-          filePath
+          chalk.bgGray(options.clean ? 'clean' : 'copy'),
+          chalk.yellow(filePath)
         );
       } catch (error) {
         console.error(
-          chalkTemplateStderr`%s: {bgRed error} {yellow %s}`,
+          '%s:',
           pkgName,
-          filePath,
+          chalk.bgRed('error'),
+          chalk.yellow(filePath),
           error
         );
       }

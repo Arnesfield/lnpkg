@@ -1,19 +1,6 @@
-import chalk, { ChalkInstance } from 'chalk';
+const COLORS = ['green', 'cyan', 'blue', 'magenta', 'red', 'yellow'] as const;
 
-export function colors(): () => ChalkInstance {
-  const colors = [
-    chalk.green,
-    chalk.cyan,
-    chalk.blue,
-    chalk.magenta,
-    chalk.red,
-    chalk.yellow
-  ];
+export function colors(): () => (typeof COLORS)[number] {
   let index = -1;
-  return () => {
-    if (++index >= colors.length) {
-      index = 0;
-    }
-    return colors[index];
-  };
+  return () => COLORS[++index >= COLORS.length ? (index = 0) : index];
 }
