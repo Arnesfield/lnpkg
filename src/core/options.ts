@@ -44,9 +44,9 @@ export function normalizeOptions(options: LnPkgOptions): NormalizedOptions {
     }
   }
 
-  const normalizedOptions: NormalizedOptions = {
+  const opts: NormalizedOptions = {
     clean: options.clean || false,
     paths: allPaths
   };
-  return normalizedOptions;
+  return opts;
 }

@@ -9,25 +9,12 @@ export interface PackageJson {
 }
 
 export interface PackageFile {
-  src: string;
-  dest: string;
-}
-
-export interface ResolvedPackage {
   /**
-   * Package source directory.
+   * Absolute path to file.
    */
-  src: string;
+  path: string;
   /**
-   * Package destination directory.
+   * Path to file relative to the package path.
    */
-  dest: string;
-  /**
-   * The source `package.json`.
-   */
-  package: PackageJson;
-  /**
-   * Resolved `package.json` files.
-   */
-  files: PackageFile[];
+  filePath: string;
 }

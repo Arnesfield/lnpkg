@@ -1,31 +1,9 @@
-import path from 'path';
-import { PathMap } from '../types/core.types';
-import { ResolvedPackage } from '../types/package.types';
+import { Package } from './package';
 import { readPackage } from './read-package';
-import { resolvePackageFiles } from './resolve-package-files';
-import { validatePathMap } from './validate-path-map';
+import { validatePackagePath } from './validate-package-path';
 
-export async function resolvePackage(
-  pathMap: PathMap
-): Promise<ResolvedPackage> {
-  const { srcPkgJsonPath } = await validatePathMap(pathMap);
-  const pkg = await readPackage(srcPkgJsonPath);
-  const dest = path.resolve(pathMap.dest, 'node_modules', pkg.name);
-  if (pathMap.src === dest) {
-    throw new Error(`${pkg.name}: cannot link to the same directory`);
-  }
-  const resolved: ResolvedPackage = {
-    src: pathMap.src,
-    dest,
-    package: pkg,
-    files: []
-  };
-  const filePaths = await resolvePackageFiles(resolved.src, pkg);
-  for (const filePath of filePaths) {
-    resolved.files.push({
-      src: path.resolve(resolved.src, filePath),
-      dest: path.resolve(resolved.dest, filePath)
-    });
-  }
-  return resolved;
+export async function resolvePackage(pkgPath: string): Promise<Package> {
+  const pkgJsonPath = await validatePackagePath(pkgPath);
+  const pkgJson = await readPackage(pkgJsonPath);
+  return new Package(pkgPath, pkgJson);
 }
