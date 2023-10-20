@@ -4,7 +4,7 @@ export interface PathMap {
 }
 
 export interface LnPkgOptions {
-  paths?: string[] | PathMap[];
-  target?: string;
+  paths: string[] | PathMap[];
+  target: string;
   clean?: boolean;
 }

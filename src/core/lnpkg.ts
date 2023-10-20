@@ -6,7 +6,7 @@ import { Color, colors } from '../utils/colors';
 import { LnPkgOptions } from '../types/core.types';
 import { normalizeOptions } from './options';
 
-export async function lnpkg(options: LnPkgOptions = {}): Promise<void> {
+export async function lnpkg(options: LnPkgOptions): Promise<void> {
   const opts = normalizeOptions(options);
   const cwd = process.cwd();
   const color = colors();
