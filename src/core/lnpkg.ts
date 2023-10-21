@@ -1,47 +1,36 @@
 import chalk from 'chalk';
 import path from 'path';
-import { Manager } from '../package/manager';
+import { getPackageFiles } from '../package/get-package-files';
+import { loader } from '../package/loader';
 import { copyFile, removeFile } from '../package/package-file';
-import { resolvePackageFiles } from '../package/resolve-package-files';
 import { LnPkgOptions } from '../types/core.types';
-import { PackageFile } from '../types/package.types';
-import { Color, colors } from '../utils/colors';
+import { colors } from '../utils/colors';
 import { normalizeOptions } from './options';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
   const opts = normalizeOptions(options);
   const cwd = process.cwd();
+  const load = loader();
   const color = colors();
   const arrow = chalk.red('→');
-  const manager = new Manager();
-  const pkgColorMap: { [pkgPath: string]: Color } = {};
   for (const pathMap of opts.paths) {
-    const pkgSrc = await manager.use(pathMap.src);
-    const pkgDest = await manager.use(pathMap.dest);
-    // load pkgSrc files if not loaded yet
-    pkgSrc.files ||= (await resolvePackageFiles(pkgSrc.path, pkgSrc.json)).map(
-      (filePath): PackageFile => {
-        return { filePath, path: path.resolve(pkgSrc.path, filePath) };
-      }
-    );
+    const srcPkg = await load(pathMap.src);
+    const destPkg = await load(pathMap.dest);
+    srcPkg.files = await getPackageFiles(srcPkg);
     // destination is {dest}/node_modules/{src}
     const destPath = path.resolve(
-      pkgDest.path,
+      destPkg.path,
       'node_modules',
-      pkgSrc.json.name
+      srcPkg.json.name
     );
 
-    const pkgColor = {
-      src: (pkgColorMap[pkgSrc.path] ||= color()),
-      dest: (pkgColorMap[pkgDest.path] ||= color())
-    };
     const output = {
       src: {
-        name: chalk[pkgColor.src].bold(pkgSrc.json.name),
-        path: path.relative(cwd, pkgSrc.path)
+        name: chalk[color(srcPkg)].bold(srcPkg.json.name),
+        path: path.relative(cwd, srcPkg.path)
       },
       dest: {
-        name: chalk[pkgColor.dest].bold(pkgDest.json.name),
+        name: chalk[color(destPkg)].bold(destPkg.json.name),
         path: path.relative(cwd, destPath)
       }
     };
@@ -56,7 +45,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
       chalk.dim(output.dest.path)
     );
 
-    for (const file of pkgSrc.files) {
+    for (const file of srcPkg.files) {
       const { filePath } = file;
       const destFilePath = path.resolve(destPath, filePath);
       try {
