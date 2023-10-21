@@ -1,5 +1,5 @@
 import path from 'path';
-import { Package } from './package';
+import { Package } from '../types/package.types';
 import { resolvePackage } from './resolve-package';
 
 export class Manager {
