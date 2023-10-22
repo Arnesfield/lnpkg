@@ -1,8 +1,8 @@
-import { LnPkgOptions, PathMap } from '../types/core.types';
+import { Entry, LnPkgOptions } from '../types/core.types';
 
 export interface NormalizedOptions {
-  paths: PathMap[];
   clean: boolean;
+  entries: Entry[];
 }
 
 export function normalizeOptions(options: LnPkgOptions): NormalizedOptions {
@@ -11,41 +11,38 @@ export function normalizeOptions(options: LnPkgOptions): NormalizedOptions {
     throw new Error('No paths specified.');
   }
 
-  const allPaths: NormalizedOptions['paths'] = [];
-  const add = (pathMap: PathMap) => {
+  const entries: Entry[] = [];
+  const add = (entry: Entry) => {
     // check if path map already exists
-    const exists = allPaths.some(
-      existing => existing.src === pathMap.src && existing.dest === pathMap.dest
+    const exists = entries.some(
+      existing => existing.src === entry.src && existing.dest === entry.dest
     );
     if (!exists) {
-      allPaths.push(pathMap);
+      entries.push(entry);
     }
   };
 
-  for (const pathValue of paths) {
-    if (typeof pathValue === 'string') {
+  for (const value of paths) {
+    if (typeof value === 'string') {
       // check target
       if (!target || typeof target !== 'string') {
         throw new Error('Missing "target" path option.');
       }
-      add({ src: pathValue, dest: target });
+      add({ src: value, dest: target });
     } else if (
-      pathValue &&
-      typeof pathValue === 'object' &&
-      pathValue.src &&
-      typeof pathValue.src === 'string' &&
-      pathValue.dest &&
-      typeof pathValue.dest === 'string'
+      value &&
+      typeof value === 'object' &&
+      value.src &&
+      typeof value.src === 'string' &&
+      value.dest &&
+      typeof value.dest === 'string'
     ) {
-      add(pathValue);
+      add(value);
     } else {
-      throw new Error(`Not a valid path map: ${pathValue}`);
+      throw new Error(`Not a valid path map: ${value}`);
     }
   }
 
-  const opts: NormalizedOptions = {
-    clean: options.clean || false,
-    paths: allPaths
-  };
+  const opts: NormalizedOptions = { clean: options.clean || false, entries };
   return opts;
 }

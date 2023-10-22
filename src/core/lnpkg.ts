@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import path from 'path';
-import { getPackageFiles } from '../package/get-package-files';
-import { loader } from '../package/loader';
+import { loadEntries } from '../package/load-entries';
 import { copyFile, removeFile } from '../package/package-file';
 import { LnPkgOptions } from '../types/core.types';
 import { colors } from '../utils/colors';
@@ -9,71 +8,77 @@ import { Time } from '../utils/time';
 import { normalizeOptions } from './options';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
-  const opts = normalizeOptions(options);
-  const cwd = process.cwd();
-  const load = loader();
-  const color = colors();
-  const arrow = chalk.red('→');
   const time = new Time();
-  time.start('all');
-  for (const pathMap of opts.paths) {
-    time.start('load');
-    const srcPkg = await load(pathMap.src);
-    const destPkg = await load(pathMap.dest);
-    srcPkg.files = await getPackageFiles(srcPkg);
-    // destination is {dest}/node_modules/{src}
-    const destPath = path.resolve(
-      destPkg.path,
-      'node_modules',
-      srcPkg.json.name
-    );
+  time.start('main');
+  time.start('entries');
 
+  const opts = normalizeOptions(options);
+  const entries = await loadEntries(opts.entries);
+  console.log(
+    'loaded %o %s:',
+    entries.length,
+    entries.length === 1 ? 'entry' : 'entries',
+    chalk.yellow(time.diff('entries'))
+  );
+
+  const cwd = process.cwd();
+  const arrow = chalk.red('→');
+  const color = colors();
+  for (const { src, dest } of entries) {
+    // destination is {dest}/node_modules/{src}
+    const destPath = path.resolve(dest.path, 'node_modules', src.json.name);
     const output = {
       src: {
-        name: chalk[color(srcPkg)].bold(srcPkg.json.name),
-        path: path.relative(cwd, srcPkg.path)
+        name: chalk[color(src)].bold(src.json.name),
+        path: path.relative(cwd, src.path)
       },
       dest: {
-        name: chalk[color(destPkg)].bold(destPkg.json.name),
+        name: chalk[color(dest)].bold(dest.json.name),
         path: path.relative(cwd, destPath)
       }
     };
-
     const pkgLog = ['%s %s %s:', output.src.name, arrow, output.dest.name];
-    console.log(
-      ...pkgLog,
+
+    const loadLog = () => [
+      chalk.bold.blue('load'),
       chalk.dim(output.src.path),
       arrow,
       chalk.dim(output.dest.path),
       chalk.yellow(time.diff('load'))
-    );
+    ];
+    time.start('load');
+    try {
+      await src.loadFiles();
+      console.log(...pkgLog, ...loadLog());
+    } catch (error) {
+      console.error(
+        ...pkgLog,
+        chalk.bgRed('error'),
+        ...loadLog(),
+        error instanceof Error ? error.toString() : error
+      );
+    }
 
     time.start('files');
-    const promises = srcPkg.files.map(async file => {
+    const promises = src.files.map(async file => {
       const { filePath } = file;
       const destFilePath = path.resolve(destPath, filePath);
-      const actionColor = options.clean ? 'magenta' : 'blue';
-      const actionLabel = chalk[actionColor].bold(
-        options.clean ? 'clean' : 'copy'
-      );
+      const actionLog = () => [
+        chalk.bold.blue(options.clean ? 'clean' : 'copy'),
+        filePath,
+        chalk.yellow(time.diff(filePath))
+      ];
       time.start(filePath);
       try {
         await (options.clean
           ? removeFile(destFilePath)
           : copyFile(file.path, destFilePath));
-        console.log(
-          ...pkgLog,
-          actionLabel,
-          filePath,
-          chalk.yellow(time.diff(filePath))
-        );
+        console.log(...pkgLog, ...actionLog());
       } catch (error) {
         console.error(
           ...pkgLog,
           chalk.bgRed('error'),
-          actionLabel,
-          filePath,
-          chalk.yellow(time.diff(filePath)),
+          ...actionLog(),
           error instanceof Error ? error.toString() : error
         );
       }
@@ -87,5 +92,5 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     );
   }
 
-  console.log('done:', chalk.yellow(time.diff('all')));
+  console.log('done:', chalk.yellow(time.diff('main')));
 }

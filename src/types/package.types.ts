@@ -18,18 +18,3 @@ export interface PackageFile {
    */
   filePath: string;
 }
-
-export interface Package {
-  /**
-   * Absolute path to the package directory.
-   */
-  path: string;
-  /**
-   * The source `package.json`.
-   */
-  json: PackageJson;
-  /**
-   * Resolved `package.json` files.
-   */
-  files: PackageFile[] | null;
-}

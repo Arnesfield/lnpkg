@@ -1,10 +1,10 @@
-export interface PathMap {
+export interface Entry {
   src: string;
   dest: string;
 }
 
 export interface LnPkgOptions {
-  paths: string[] | PathMap[];
-  target: string;
+  paths: (string | Entry)[];
+  target?: string;
   clean?: boolean;
 }

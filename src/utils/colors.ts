@@ -1,5 +1,5 @@
 import { ColorName } from 'chalk';
-import { Package } from '../types/package.types';
+import { Package } from '../package/package';
 
 const COLORS = ['green', 'cyan', 'blue', 'magenta', 'red', 'yellow'] as const;
 
