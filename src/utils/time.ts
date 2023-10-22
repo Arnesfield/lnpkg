@@ -9,11 +9,13 @@ export class Time {
     return performance.now() - (this.timeMap[key] ?? 0);
   }
 
+  clear(key: string): void {
+    delete this.timeMap[key];
+  }
+
   diff(key: string, keep = false): string {
     const diff = this.end(key);
-    if (!keep) {
-      delete this.timeMap[key];
-    }
-    return diff.toFixed(+(diff < 1)) + 'ms';
+    if (!keep) this.clear(key);
+    return parseFloat(diff.toFixed(+(diff < 1))) + 'ms';
   }
 }
