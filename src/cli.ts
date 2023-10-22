@@ -29,9 +29,13 @@ export async function cli(): Promise<void> {
   }
   const programOpts = program.opts<ProgramOptions>();
   const paths = args.filter(arg => !arg.startsWith('-'));
-  await lnpkg({
-    paths,
-    clean: programOpts.clean,
-    target: programOpts.target || process.cwd()
-  });
+  try {
+    await lnpkg({
+      paths,
+      clean: programOpts.clean,
+      target: programOpts.target || process.cwd()
+    });
+  } catch (error) {
+    console.error(error instanceof Error ? error.toString() : error);
+  }
 }

@@ -39,7 +39,7 @@ export function normalizeOptions(options: LnPkgOptions): NormalizedOptions {
     ) {
       add(pathValue);
     } else {
-      throw new Error(`${pathValue}: not a valid path map`);
+      throw new Error(`Not a valid path map: ${pathValue}`);
     }
   }
 

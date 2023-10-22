@@ -7,6 +7,6 @@ export async function readPackage(pkgJsonPath: string): Promise<PackageJson> {
     const pkg: PackageJson = JSON.parse(pkgJson.toString());
     return pkg;
   } catch {
-    throw new Error(`${pkgJsonPath}: cannot parse json file`);
+    throw new Error(`Cannot parse JSON file: ${pkgJsonPath}`);
   }
 }
