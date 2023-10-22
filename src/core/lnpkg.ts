@@ -47,13 +47,13 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
       chalk.dim(output.src.path),
       arrow,
       chalk.dim(output.dest.path),
-      chalk.yellow(time.diff('load') + 'ms')
+      chalk.yellow(time.diff('load'))
     );
 
     for (const file of srcPkg.files) {
       const { filePath } = file;
       const destFilePath = path.resolve(destPath, filePath);
-      time.start('file');
+      time.start(filePath);
       try {
         await (options.clean
           ? removeFile(destFilePath)
@@ -65,7 +65,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
           output.dest.name,
           chalk.bgGray(options.clean ? 'clean' : 'copy'),
           filePath,
-          chalk.yellow(time.diff('file') + 'ms')
+          chalk.yellow(time.diff(filePath))
         );
       } catch (error) {
         console.error(
@@ -75,12 +75,12 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
           output.dest.name,
           chalk.bgRed('error'),
           filePath,
-          chalk.yellow(time.diff('file') + 'ms'),
+          chalk.yellow(time.diff(filePath)),
           error
         );
       }
     }
   }
 
-  console.log('done:', chalk.yellow(time.diff('all') + 'ms'));
+  console.log('done:', chalk.yellow(time.diff('all')));
 }
