@@ -39,47 +39,52 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
       }
     };
 
+    const pkgLog = ['%s %s %s:', output.src.name, arrow, output.dest.name];
     console.log(
-      '%s %s %s:',
-      output.src.name,
-      arrow,
-      output.dest.name,
+      ...pkgLog,
       chalk.dim(output.src.path),
       arrow,
       chalk.dim(output.dest.path),
       chalk.yellow(time.diff('load'))
     );
 
-    for (const file of srcPkg.files) {
+    time.start('files');
+    const promises = srcPkg.files.map(async file => {
       const { filePath } = file;
       const destFilePath = path.resolve(destPath, filePath);
+      const actionColor = options.clean ? 'magenta' : 'blue';
+      const actionLabel = chalk[actionColor].bold(
+        options.clean ? 'clean' : 'copy'
+      );
       time.start(filePath);
       try {
         await (options.clean
           ? removeFile(destFilePath)
           : copyFile(file.path, destFilePath));
         console.log(
-          '%s %s %s:',
-          output.src.name,
-          arrow,
-          output.dest.name,
-          chalk.bgGray(options.clean ? 'clean' : 'copy'),
+          ...pkgLog,
+          actionLabel,
           filePath,
           chalk.yellow(time.diff(filePath))
         );
       } catch (error) {
         console.error(
-          '%s %s %s:',
-          output.src.name,
-          arrow,
-          output.dest.name,
+          ...pkgLog,
           chalk.bgRed('error'),
+          actionLabel,
           filePath,
           chalk.yellow(time.diff(filePath)),
-          error
+          error instanceof Error ? error.toString() : error
         );
       }
-    }
+    });
+
+    await Promise.all(promises);
+    console.log(
+      ...pkgLog,
+      chalk.bold.green('done'),
+      chalk.yellow(time.diff('files'))
+    );
   }
 
   console.log('done:', chalk.yellow(time.diff('all')));
