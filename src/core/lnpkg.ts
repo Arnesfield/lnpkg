@@ -7,6 +7,7 @@ import { createLinks } from '../link/create-links';
 import { Link } from '../link/link';
 import { LnPkgOptions } from '../types/core.types';
 import { PackageFile } from '../types/package.types';
+import { formatTime } from '../utils/format-time';
 import { Time } from '../utils/time';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
@@ -23,7 +24,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
 
   const getPrefix = prettyLinks();
 
-  async function applyLink(link: Link, file: PackageFile) {
+  async function applyLink(link: Link, file: PackageFile, includeTime = false) {
     const key = [link.src.path, link.dest.path, file.path].join(':');
     const logs = () => [
       chalk.bold.blue('copy'),
@@ -31,6 +32,10 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
       chalk.yellow(time.diff(key))
     ];
     const prefix = getPrefix(link);
+    if (includeTime) {
+      prefix[0] = '[%s] ' + prefix[0];
+      prefix.splice(1, 0, chalk.gray(formatTime(new Date())));
+    }
     time.start(key);
     try {
       // TODO: handle/remove clean?
@@ -100,7 +105,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     for (const link of links) {
       const file = link.src.getFile(filePath);
       if (file) {
-        await applyLink(link, file);
+        await applyLink(link, file, true);
       }
     }
   });
