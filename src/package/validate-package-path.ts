@@ -1,6 +1,6 @@
-import fs from 'fs';
 import path from 'path';
 import { PACKAGE_JSON } from '../constants/package.constants';
+import { lstat } from '../utils/fs.utils';
 
 /**
  * Validate the package path and get the path to its `package.json`.
@@ -18,15 +18,4 @@ export async function validatePackagePath(pkgPath: string): Promise<string> {
     throw new Error(`Not a file: ${pkgJsonPath}`);
   }
   return pkgJsonPath;
-}
-
-async function lstat(value: string) {
-  try {
-    return await fs.promises.lstat(value);
-  } catch (error) {
-    const isNotFound =
-      error instanceof Error &&
-      (error as NodeJS.ErrnoException).code === 'ENOENT';
-    throw isNotFound ? new Error(`No such file or directory: ${value}`) : error;
-  }
 }

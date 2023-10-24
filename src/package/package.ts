@@ -1,5 +1,6 @@
 import path from 'path';
 import { PackageFile, PackageJson } from '../types/package.types';
+import { simplifyPaths } from '../utils/simplify-paths';
 import { readPackage } from './read-package';
 import { resolvePackageFiles } from './resolve-package-files';
 import { validatePackagePath } from './validate-package-path';
@@ -8,6 +9,7 @@ export class Package {
   private _path: string | undefined;
   private _json: PackageJson | undefined;
   private _files: PackageFile[] | undefined;
+  private fileLookup: { [path: string]: PackageFile | undefined } = {};
 
   /**
    * Absolute path to the package directory.
@@ -54,10 +56,37 @@ export class Package {
   async loadFiles(refresh = false): Promise<PackageFile[]> {
     if (refresh || !this._files) {
       const filePaths = await resolvePackageFiles(this.path, this.json);
-      this._files = filePaths.map((filePath): PackageFile => {
-        return { filePath, path: path.resolve(this.path, filePath) };
+      this.fileLookup = {};
+      this._files = filePaths.map(filePath => {
+        const file: PackageFile = {
+          filePath,
+          path: path.resolve(this.path, filePath)
+        };
+        this.fileLookup[file.path] = file;
+        return file;
       });
     }
     return this._files;
+  }
+
+  getFile(filePath: string): PackageFile | undefined {
+    // check if part of src path
+    filePath = path.isAbsolute(filePath)
+      ? filePath
+      : path.resolve(this.path, filePath);
+    const matchedFile =
+      this.fileLookup[filePath] ||
+      this.files.find(file => file.path === filePath);
+    const isValid =
+      matchedFile || simplifyPaths([this.path, filePath]).length === 1;
+    if (!isValid) {
+      return;
+    }
+    // add to fileLookup when valid
+    const file = (this.fileLookup[filePath] = matchedFile || {
+      path: filePath,
+      filePath: path.relative(this.path, filePath)
+    });
+    return file;
   }
 }

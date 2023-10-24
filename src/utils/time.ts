@@ -15,7 +15,9 @@ export class Time {
 
   diff(key: string, keep = false): string {
     const diff = this.end(key);
-    if (!keep) this.clear(key);
+    if (!keep) {
+      this.clear(key);
+    }
     return parseFloat(diff.toFixed(+(diff < 1))) + 'ms';
   }
 }

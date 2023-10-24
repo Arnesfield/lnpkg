@@ -1,96 +1,107 @@
 import chalk from 'chalk';
+import { FSWatcher } from 'chokidar';
 import path from 'path';
-import { loadEntries } from '../package/load-entries';
-import { copyFile, removeFile } from '../package/package-file';
+import { getEntries } from '../helpers/get-entries';
+import { prettyLinks } from '../helpers/pretty-links';
+import { createLinks } from '../link/create-links';
+import { Link } from '../link/link';
 import { LnPkgOptions } from '../types/core.types';
-import { colors } from '../utils/colors';
+import { PackageFile } from '../types/package.types';
 import { Time } from '../utils/time';
-import { normalizeOptions } from './options';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
   const time = new Time();
   time.start('main');
-  time.start('entries');
-
-  const opts = normalizeOptions(options);
-  const entries = await loadEntries(opts.entries);
+  time.start('links');
+  const links = await createLinks(getEntries(options));
   console.log(
     'loaded %o %s:',
-    entries.length,
-    entries.length === 1 ? 'entry' : 'entries',
-    chalk.yellow(time.diff('entries'))
+    links.length,
+    links.length === 1 ? 'entry' : 'entries',
+    chalk.yellow(time.diff('links'))
   );
 
-  const cwd = process.cwd();
-  const arrow = chalk.red('→');
-  const color = colors();
-  for (const { src, dest } of entries) {
-    // destination is {dest}/node_modules/{src}
-    const destPath = path.resolve(dest.path, 'node_modules', src.json.name);
-    const output = {
-      src: {
-        name: chalk[color(src)].bold(src.json.name),
-        path: path.relative(cwd, src.path)
-      },
-      dest: {
-        name: chalk[color(dest)].bold(dest.json.name),
-        path: path.relative(cwd, destPath)
-      }
-    };
-    const pkgLog = ['%s %s %s:', output.src.name, arrow, output.dest.name];
+  const getPrefix = prettyLinks();
 
-    const loadLog = () => [
-      chalk.bold.blue('load'),
-      chalk.dim(output.src.path),
-      arrow,
-      chalk.dim(output.dest.path),
-      chalk.yellow(time.diff('load'))
+  async function applyLink(link: Link, file: PackageFile) {
+    const key = [link.src.path, link.dest.path, file.path].join(':');
+    const logs = () => [
+      chalk.bold.blue('copy'),
+      file.filePath,
+      chalk.yellow(time.diff(key))
     ];
-    time.start('load');
+    const prefix = getPrefix(link);
+    time.start(key);
     try {
-      await src.loadFiles();
-      console.log(...pkgLog, ...loadLog());
+      // TODO: handle/remove clean?
+      if (await link.copy(file.path)) {
+        console.log(...prefix, ...logs());
+      } else {
+        time.clear(key);
+      }
     } catch (error) {
       console.error(
-        ...pkgLog,
+        ...prefix,
         chalk.bgRed('error'),
-        ...loadLog(),
+        ...logs(),
+        error instanceof Error ? error.toString() : error
+      );
+    }
+  }
+
+  const cwd = process.cwd();
+  for (const link of links) {
+    const logs = () => [
+      chalk.bold.blue('load'),
+      chalk.dim(path.relative(cwd, link.src.path)),
+      chalk.red('→'),
+      chalk.dim(path.relative(cwd, link.getDestPath())),
+      chalk.yellow(time.diff('load'))
+    ];
+    const prefix = getPrefix(link);
+    time.start('load');
+    try {
+      await link.src.loadFiles();
+      console.log(...prefix, ...logs());
+    } catch (error) {
+      console.error(
+        ...prefix,
+        chalk.bgRed('error'),
+        ...logs(),
         error instanceof Error ? error.toString() : error
       );
     }
 
     time.start('files');
-    const promises = src.files.map(async file => {
-      const { filePath } = file;
-      const destFilePath = path.resolve(destPath, filePath);
-      const actionLog = () => [
-        chalk.bold.blue(options.clean ? 'clean' : 'copy'),
-        filePath,
-        chalk.yellow(time.diff(filePath))
-      ];
-      time.start(filePath);
-      try {
-        await (options.clean
-          ? removeFile(destFilePath)
-          : copyFile(file.path, destFilePath));
-        console.log(...pkgLog, ...actionLog());
-      } catch (error) {
-        console.error(
-          ...pkgLog,
-          chalk.bgRed('error'),
-          ...actionLog(),
-          error instanceof Error ? error.toString() : error
-        );
-      }
-    });
-
+    const promises = link.src.files.map(file => applyLink(link, file));
     await Promise.all(promises);
+
     console.log(
-      ...pkgLog,
+      ...prefix,
       chalk.bold.green('done'),
       chalk.yellow(time.diff('files'))
     );
   }
 
   console.log('done:', chalk.yellow(time.diff('main')));
+
+  // watch mode
+  if (!options.watch) {
+    return;
+  }
+
+  const watcher = new FSWatcher();
+  for (const link of links) {
+    for (const file of link.src.files) {
+      watcher.add(file.path);
+    }
+  }
+  watcher.on('change', async filePath => {
+    for (const link of links) {
+      const file = link.src.getFile(filePath);
+      if (file) {
+        await applyLink(link, file);
+      }
+    }
+  });
 }

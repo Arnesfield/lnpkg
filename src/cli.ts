@@ -5,6 +5,7 @@ import { lnpkg } from './core/lnpkg';
 interface ProgramOptions {
   target: string;
   clean: boolean;
+  watch: boolean;
 }
 
 function createProgram() {
@@ -13,6 +14,7 @@ function createProgram() {
     .description(description)
     .argument('[dirs...]', 'paths to local Node.js packages to link')
     .option('-t, --target <target>', 'target Node.js package to link', '.')
+    .option('-w, --watch', 'watch package files for changes', false)
     .option(
       '--clean',
       'delete files from <target> based on <dirs> files',
@@ -32,7 +34,9 @@ export async function cli(): Promise<void> {
   try {
     await lnpkg({
       paths,
+      // TODO: handle clean
       clean: programOpts.clean,
+      watch: programOpts.watch,
       target: programOpts.target || process.cwd()
     });
   } catch (error) {
