@@ -15,7 +15,9 @@ export function simplifyPaths(paths: string[]): string[] {
   const simplifiedPaths = paths.sort().splice(0, 1);
   let previous = simplifiedPaths[0];
   for (const value of paths) {
-    if (!path.dirname(value).startsWith(previous)) {
+    const a = path.dirname(value) + path.sep;
+    const b = previous + path.sep;
+    if (!a.startsWith(b)) {
       previous = value;
       simplifiedPaths.push(value);
     }
