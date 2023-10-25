@@ -1,3 +1,4 @@
+import path from 'path';
 import { Entry, LnPkgOptions } from '../types/core.types';
 
 export function getEntries(options: LnPkgOptions): Entry[] {
@@ -8,6 +9,8 @@ export function getEntries(options: LnPkgOptions): Entry[] {
 
   const entries: Entry[] = [];
   function add(entry: Entry) {
+    entry.src = path.resolve(entry.src);
+    entry.dest = path.resolve(entry.dest);
     // check if path map already exists
     const exists = entries.some(
       existing => existing.src === entry.src && existing.dest === entry.dest

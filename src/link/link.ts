@@ -16,8 +16,13 @@ export class Link {
     this.dest = options.dest;
   }
 
-  getDestPath(): string {
-    return path.resolve(this.dest.path, 'node_modules', this.src.json.name);
+  getDestPath(...paths: string[]): string {
+    return path.resolve(
+      this.dest.path,
+      'node_modules',
+      this.src.json.name,
+      ...paths
+    );
   }
 
   async copy(filePath: string): Promise<boolean> {
@@ -25,7 +30,7 @@ export class Link {
     if (!file) {
       return false;
     }
-    const destFilePath = path.resolve(this.getDestPath(), file.filePath);
+    const destFilePath = this.getDestPath(file.filePath);
     await cp(file.path, destFilePath);
     return true;
   }
