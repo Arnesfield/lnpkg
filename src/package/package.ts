@@ -77,10 +77,15 @@ export class Package {
     const matchedFile =
       this.fileLookup[filePath] ||
       this.files.find(file => file.path === filePath);
-    const isValid =
-      matchedFile || simplifyPaths([this.path, filePath]).length === 1;
-    if (!isValid) {
-      return;
+    if (!matchedFile) {
+      // if no matched files, check if filePath is in package files
+      const isInPackage = simplifyPaths([this.path, filePath]).length === 1;
+      const isInPackageFiles = !simplifyPaths(
+        this.files.map(file => file.path).concat(filePath)
+      ).includes(filePath);
+      if (!(isInPackage && isInPackageFiles)) {
+        return;
+      }
     }
     // add to fileLookup when valid
     const file = (this.fileLookup[filePath] = matchedFile || {
