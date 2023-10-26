@@ -6,9 +6,34 @@ import { PackageFile } from '../types/package.types';
 import { colors } from '../utils/colors';
 import { formatTime } from '../utils/format-time';
 import { Time } from '../utils/time';
+import { Action } from './runner.types';
 
 export class Runner {
   private readonly color = colors();
+  private readonly actions: Action[] = [];
+
+  async enqueue(item: Action): Promise<void> {
+    const isRunning = this.actions.length > 0;
+    this.actions.push(item);
+    if (isRunning) {
+      return;
+    }
+    for (const item of this.actions) {
+      switch (item.action) {
+        case 'init':
+          await this.reinit(item.link.src);
+          break;
+        case 'copy': {
+          const file = item.link.src.getFile(item.filePath);
+          if (file) {
+            await this.run(item.link, file, true);
+          }
+          break;
+        }
+      }
+    }
+    this.actions.length = 0;
+  }
 
   getDisplayName(pkg: Package): string {
     return chalk[this.color(pkg)].bold(pkg.json.name);
@@ -45,7 +70,11 @@ export class Runner {
     }
   }
 
-  async run(link: Link, file: PackageFile, watchMode = false): Promise<void> {
+  protected async run(
+    link: Link,
+    file: PackageFile,
+    watchMode = false
+  ): Promise<void> {
     const time = new Time();
     const logs = () => {
       const logs = [
@@ -87,7 +116,7 @@ export class Runner {
     }
   }
 
-  async reinit(pkg: Package): Promise<void> {
+  protected async reinit(pkg: Package): Promise<void> {
     const file = pkg.getFile('package.json');
     if (!file) {
       return;
