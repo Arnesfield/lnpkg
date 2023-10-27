@@ -4,6 +4,7 @@ import { lnpkg } from './core/lnpkg';
 
 interface ProgramOptions {
   target: string;
+  dryRun?: boolean;
   watch?: boolean;
   watchAfter?: boolean;
 }
@@ -19,6 +20,7 @@ function createProgram() {
       '-W, --watch-after',
       'watch package files for changes after linking packages'
     )
+    .option('--dry-run', 'log only without performing operations')
     .version(`v${version}`, '-v, --version');
 }
 
@@ -28,15 +30,9 @@ export async function cli(): Promise<void> {
   if (args.length === 0) {
     program.help();
   }
-  const programOpts = program.opts<ProgramOptions>();
-  const paths = args.filter(arg => !arg.startsWith('-'));
+  const opts = program.opts<ProgramOptions>();
   try {
-    await lnpkg({
-      paths,
-      watch: programOpts.watch,
-      watchAfter: programOpts.watchAfter,
-      target: programOpts.target || process.cwd()
-    });
+    await lnpkg({ ...opts, paths: args, target: opts.target || process.cwd() });
   } catch (error) {
     console.error(error instanceof Error ? error.toString() : error);
   }

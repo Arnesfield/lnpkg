@@ -8,9 +8,7 @@ import { LnPkgOptions } from '../types/core.types';
 import { Time } from '../utils/time';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
-  const runner = new Runner();
   const time = new Time();
-
   time.start('links');
   const links = await createLinks(getEntries(options));
   const displayName = chalk.bgBlack(name);
@@ -22,6 +20,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     chalk.yellow(time.diff('links'))
   );
 
+  const runner = new Runner({ dryRun: options.dryRun });
   const { watch: isWatch, watchAfter } = options;
   if (!isWatch || watchAfter) {
     time.start('main');

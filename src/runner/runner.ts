@@ -9,9 +9,15 @@ import { cp, rm } from '../utils/fs.utils';
 import { Time } from '../utils/time';
 import { Action } from './runner.types';
 
+export interface RunnerOptions {
+  dryRun?: boolean;
+}
+
 export class Runner {
   private readonly color = colors();
   private readonly actions: Action[] = [];
+
+  constructor(protected readonly options: RunnerOptions = {}) {}
 
   async enqueue(item: Action): Promise<void> {
     const isRunning = this.actions.length > 0;
@@ -37,8 +43,14 @@ export class Runner {
   }
 
   getPrefix(link: PackageLink, watchMode = false): string[] {
-    const log = (watchMode ? '[%s] ' : '') + '%s %s %s:';
-    const logs: string[] = [log];
+    const log =
+      (this.options.dryRun ? '%s ' : '') +
+      (watchMode ? '[%s] ' : '') +
+      '%s %s %s:';
+    const logs = [log];
+    if (this.options.dryRun) {
+      logs.push(chalk.bgBlack.yellow('dry'));
+    }
     if (watchMode) {
       logs.push(chalk.gray(formatTime(new Date())));
     }
@@ -72,7 +84,9 @@ export class Runner {
     time.start('file');
     try {
       let log = true;
-      if (type === 'copy') {
+      if (this.options.dryRun) {
+        // do nothing
+      } else if (type === 'copy') {
         await cp(file.path, destFilePath);
       } else if (!(await rm(destFilePath))) {
         log = false;
