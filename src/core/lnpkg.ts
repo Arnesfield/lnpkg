@@ -25,7 +25,10 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
   const { watch: isWatch, watchAfter } = options;
   if (!isWatch || watchAfter) {
     time.start('main');
-    await runner.runAll(links);
+    for (const link of links) {
+      const copy = link.src.files.map(file => runner.run(link, file, 'copy'));
+      await Promise.all(copy);
+    }
     console.log('%s Done:', displayName, chalk.yellow(time.diff('main')));
   }
 
@@ -38,18 +41,19 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     { ignoreInitial: true }
   );
   watcher.on('all', (eventName, filePath) => {
-    if (eventName !== 'add' && eventName !== 'change') {
-      return;
-    }
+    const isRemove = eventName === 'unlink' || eventName === 'unlinkDir';
     for (const link of links) {
       const file = link.src.getFile(filePath);
       if (!file) {
-        return;
+        continue;
+      } else if (isRemove) {
+        runner.enqueue({ type: 'remove', link, filePath });
+        continue;
       }
-      runner.enqueue({ action: 'copy', link, filePath });
+      runner.enqueue({ type: 'copy', link, filePath });
       // reinitialize package for package.json changes
       if (file.filePath === 'package.json') {
-        runner.enqueue({ action: 'init', link });
+        runner.enqueue({ type: 'init', link });
       }
     }
   });

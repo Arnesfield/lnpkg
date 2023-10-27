@@ -22,7 +22,6 @@ export async function cp(src: string, dest: string): Promise<void> {
   await fs.promises.cp(src, dest, { recursive: true });
 }
 
-// TODO: clean?
 export async function rm(value: string): Promise<boolean> {
   try {
     await fs.promises.rm(value, { recursive: true });

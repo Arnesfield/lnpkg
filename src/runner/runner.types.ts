@@ -6,13 +6,18 @@ interface BaseAction {
   link: Link;
 }
 
+interface InitAction extends BaseAction {
+  type: 'init';
+}
+
 interface CopyAction extends BaseAction {
-  action: 'copy';
+  type: 'copy';
   filePath: string;
 }
 
-interface InitAction extends BaseAction {
-  action: 'init';
+interface RemoveAction extends BaseAction {
+  type: 'remove';
+  filePath: string;
 }
 
-export type Action = CopyAction | InitAction;
+export type Action = InitAction | CopyAction | RemoveAction;

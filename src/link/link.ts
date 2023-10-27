@@ -1,6 +1,5 @@
 import path from 'path';
 import { Package } from '../package/package';
-import { cp } from '../utils/fs.utils';
 
 export interface PackageLink {
   src: Package;
@@ -23,15 +22,5 @@ export class Link {
       this.src.json.name,
       ...paths
     );
-  }
-
-  async copy(filePath: string): Promise<boolean> {
-    const file = this.src.getFile(filePath);
-    if (!file) {
-      return false;
-    }
-    const destFilePath = this.getDestPath(file.filePath);
-    await cp(file.path, destFilePath);
-    return true;
   }
 }

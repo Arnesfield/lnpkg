@@ -5,6 +5,7 @@ import { Package } from '../package/package';
 import { PackageFile } from '../types/package.types';
 import { colors } from '../utils/colors';
 import { formatTime } from '../utils/format-time';
+import { cp, rm } from '../utils/fs.utils';
 import { Time } from '../utils/time';
 import { Action } from './runner.types';
 
@@ -19,17 +20,13 @@ export class Runner {
       return;
     }
     for (const item of this.actions) {
-      switch (item.action) {
-        case 'init':
-          await this.reinit(item.link.src);
-          break;
-        case 'copy': {
-          const file = item.link.src.getFile(item.filePath);
-          if (file) {
-            await this.run(item.link, file, true);
-          }
-          break;
-        }
+      if (item.type === 'init') {
+        await this.reinit(item.link.src);
+        continue;
+      }
+      const file = item.link.src.getFile(item.filePath);
+      if (file) {
+        await this.run(item.link, file, item.type, true);
       }
     }
     this.actions.length = 0;
@@ -39,72 +36,49 @@ export class Runner {
     return chalk[this.color(pkg)].bold(pkg.json.name);
   }
 
-  getPrefix(link: PackageLink): string[] {
-    const srcName = this.getDisplayName(link.src);
-    const destName = this.getDisplayName(link.dest);
-    return ['%s %s %s:', srcName, chalk.red('→'), destName];
-  }
-
-  async runAll(links: Link[]): Promise<void> {
-    const cwd = process.cwd();
-    const time = new Time();
-    for (const link of links) {
-      const prefix = this.getPrefix(link);
-      console.log(
-        ...prefix,
-        chalk.bold.blue('load'),
-        chalk.dim(path.relative(cwd, link.src.path)),
-        chalk.red('→'),
-        chalk.dim(path.relative(cwd, link.getDestPath()))
-      );
-
-      time.start('files');
-      const promises = link.src.files.map(file => this.run(link, file));
-      await Promise.all(promises);
-
-      console.log(
-        ...prefix,
-        chalk.bold.green('done'),
-        chalk.yellow(time.diff('files'))
-      );
+  getPrefix(link: PackageLink, watchMode = false): string[] {
+    const log = (watchMode ? '[%s] ' : '') + '%s %s %s:';
+    const logs: string[] = [log];
+    if (watchMode) {
+      logs.push(chalk.gray(formatTime(new Date())));
     }
+    logs.push(
+      this.getDisplayName(link.src),
+      chalk.red('→'),
+      this.getDisplayName(link.dest)
+    );
+    return logs;
   }
 
-  protected async run(
+  async run(
     link: Link,
     file: PackageFile,
+    type: 'copy' | 'remove',
     watchMode = false
   ): Promise<void> {
+    const cwd = process.cwd();
     const time = new Time();
-    const logs = () => {
-      const logs = [
-        chalk.bold.blue('copy'),
-        file.filePath,
-        chalk.yellow(time.diff('file'))
-      ];
-      if (watchMode) {
-        const cwd = process.cwd();
-        logs.push(
-          '(' + chalk.dim(path.relative(cwd, file.path)),
-          chalk.red('→'),
-          chalk.dim(path.relative(cwd, link.getDestPath(file.filePath))) + ')'
-        );
-      }
-      return logs;
-    };
+    const logs = () => [
+      chalk.bold[type === 'copy' ? 'blue' : 'magenta'](type),
+      file.filePath,
+      chalk.yellow(time.diff('file')),
+      '(' + chalk.dim(path.relative(cwd, file.path)),
+      chalk.red('→'),
+      chalk.dim(path.relative(cwd, link.getDestPath(file.filePath))) + ')'
+    ];
 
-    const prefix = this.getPrefix(link);
-    if (watchMode) {
-      prefix[0] = '[%s] ' + prefix[0];
-      prefix.splice(1, 0, chalk.gray(formatTime(new Date())));
-    }
+    const prefix = this.getPrefix(link, watchMode);
+    const destFilePath = link.getDestPath(file.filePath);
     time.start('file');
     try {
-      // TODO: handle/remove clean?
-      if (await link.copy(file.path)) {
+      let log = true;
+      if (type === 'copy') {
+        await cp(file.path, destFilePath);
+      } else if (!(await rm(destFilePath))) {
+        log = false;
+      }
+      if (log) {
         console.log(...prefix, ...logs());
-      } else {
-        time.clear('file');
       }
     } catch (error) {
       console.error(
