@@ -109,7 +109,7 @@ export class Runner {
     ];
 
     try {
-      await pkg.init(pkg.path);
+      await pkg.init();
       console.log(...prefix, ...logs());
     } catch (error) {
       console.error(

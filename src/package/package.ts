@@ -6,20 +6,16 @@ import { resolvePackageFiles } from './resolve-package-files';
 import { validatePackagePath } from './validate-package-path';
 
 export class Package {
-  private _path: string | undefined;
   private _json: PackageJson | undefined;
   private _files: PackageFile[] | undefined;
   private fileLookup: { [path: string]: PackageFile | undefined } = {};
 
-  /**
-   * Absolute path to the package directory.
-   */
-  get path(): string {
-    if (!this._path) {
-      throw new Error('Package not initialized.');
-    }
-    return this._path;
-  }
+  constructor(
+    /**
+     * Absolute path to the package directory.
+     */
+    readonly path: string
+  ) {}
 
   /**
    * The source `package.json`.
@@ -42,9 +38,8 @@ export class Package {
     return this._files;
   }
 
-  async init(pkgPath: string): Promise<PackageJson> {
-    this._path = pkgPath;
-    const pkgJsonPath = await validatePackagePath(pkgPath);
+  async init(): Promise<PackageJson> {
+    const pkgJsonPath = await validatePackagePath(this.path);
     this._json = await readPackage(pkgJsonPath);
     // also load files if they were available when refreshing
     if (this._files) {

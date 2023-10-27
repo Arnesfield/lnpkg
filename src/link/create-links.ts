@@ -9,10 +9,10 @@ export async function createLinks(entries: Entry[]): Promise<Link[]> {
     let dest = map[entry.dest];
     // resolve destination first to make sure it's available for the next iterations
     if (!dest) {
-      await (map[entry.dest] = dest = new Package()).init(entry.dest);
+      await (map[entry.dest] = dest = new Package(entry.dest)).init();
     }
     if (!src) {
-      await (map[entry.src] = src = new Package()).init(entry.src);
+      await (map[entry.src] = src = new Package(entry.src)).init();
       await src.loadFiles();
     }
     return new Link({ src, dest });
