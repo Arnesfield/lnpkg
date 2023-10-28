@@ -4,7 +4,7 @@ import { lnpkg } from './core/lnpkg';
 import { parsePaths } from './helpers/parse-paths';
 
 interface ProgramOptions {
-  dest: string;
+  to: string;
   dryRun?: boolean;
   watch?: boolean;
   watchAfter?: boolean;
@@ -39,9 +39,11 @@ export async function cli(): Promise<void> {
   const opts = program.opts<ProgramOptions>();
   try {
     await lnpkg({
-      ...opts,
+      dryRun: opts.dryRun,
+      watch: opts.watch,
+      watchAfter: opts.watchAfter,
       paths: parsePaths(args),
-      target: opts.dest || process.cwd()
+      dest: opts.to || process.cwd()
     });
   } catch (error) {
     console.error(error instanceof Error ? error.toString() : error);

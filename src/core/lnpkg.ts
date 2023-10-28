@@ -10,13 +10,14 @@ import { Time } from '../utils/time';
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
   const time = new Time();
   time.start('links');
-  const links = await createLinks(getEntries(options));
+  const { links, total } = await createLinks(getEntries(options));
   const displayName = chalk.bgBlack(name);
   console.log(
-    '%s Loaded %o %s:',
+    '%s Loaded %o packages, %o %s:',
     displayName,
+    total,
     links.length,
-    links.length === 1 ? 'entry' : 'entries',
+    links.length === 1 ? 'link' : 'links',
     chalk.yellow(time.diff('links'))
   );
 

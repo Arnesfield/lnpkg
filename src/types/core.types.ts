@@ -5,7 +5,7 @@ export interface Entry {
 
 export interface LnPkgOptions {
   paths: (string | Entry)[];
-  target?: string;
+  dest?: string;
   dryRun?: boolean;
   watch?: boolean;
   watchAfter?: boolean;
