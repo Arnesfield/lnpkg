@@ -23,8 +23,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
   );
 
   const runner = new Runner({ dryRun: options.dryRun });
-  const { watch: isWatch, watchAfter } = options;
-  if (!isWatch || watchAfter) {
+  if (!options.watchOnly) {
     time.start('main');
     for (const link of links) {
       const copy = link.src.files.map(file => runner.run(link, file, 'copy'));
@@ -32,8 +31,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     }
     console.log('%s Done:', displayName, chalk.yellow(time.diff('main')));
   }
-
-  if (!isWatch && !watchAfter) {
+  if (!options.watch && !options.watchOnly) {
     return;
   }
 

@@ -8,5 +8,5 @@ export interface LnPkgOptions {
   dest?: string;
   dryRun?: boolean;
   watch?: boolean;
-  watchAfter?: boolean;
+  watchOnly?: boolean;
 }
