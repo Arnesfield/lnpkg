@@ -6,6 +6,7 @@ import { PackageFile } from '../types/package.types';
 import { colors } from '../utils/colors';
 import { formatTime } from '../utils/format-time';
 import { cp, rm } from '../utils/fs.utils';
+import { Queue } from '../utils/queue';
 import { Time } from '../utils/time';
 import { Action } from './runner.types';
 
@@ -15,27 +16,27 @@ export interface RunnerOptions {
 
 export class Runner {
   private readonly color = colors();
-  private readonly actions: Action[] = [];
+  private readonly queue: Queue<Action>;
 
-  constructor(protected readonly options: RunnerOptions = {}) {}
+  constructor(protected readonly options: RunnerOptions = {}) {
+    this.queue = new Queue<Action>({
+      handle: item => this.handleAction(item)
+    });
+  }
 
-  async enqueue(item: Action): Promise<void> {
-    const isRunning = this.actions.length > 0;
-    this.actions.push(item);
-    if (isRunning) {
+  private async handleAction(item: Action) {
+    if (item.type === 'init') {
+      await this.reinit(item.link.src);
       return;
     }
-    for (const item of this.actions) {
-      if (item.type === 'init') {
-        await this.reinit(item.link.src);
-        continue;
-      }
-      const file = item.link.src.getFile(item.filePath);
-      if (file) {
-        await this.run(item.link, file, item.type, true);
-      }
+    const file = item.link.src.getFile(item.filePath);
+    if (file) {
+      await this.run(item.link, file, item.type, true);
     }
-    this.actions.length = 0;
+  }
+
+  enqueue(item: Action): void {
+    this.queue.enqueue(item);
   }
 
   getDisplayName(pkg: Package): string {
