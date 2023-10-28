@@ -4,7 +4,7 @@ import { lnpkg } from './core/lnpkg';
 import { parsePaths } from './helpers/parse-paths';
 
 interface ProgramOptions {
-  target: string;
+  dest: string;
   dryRun?: boolean;
   watch?: boolean;
   watchAfter?: boolean;
@@ -20,7 +20,7 @@ function createProgram() {
         'Separate with a colon to map specific packages:\n\n' +
         'lnpkg <src1> : <dest1> <src2> <src3> : <dest3> ...'
     )
-    .option('-t, --target <target>', 'target Node.js package to link', '.')
+    .option('-t, --to <dest>', 'the Node.js package to link', '.')
     .option('-w, --watch', 'watch package files for changes')
     .option(
       '-W, --watch-after',
@@ -41,7 +41,7 @@ export async function cli(): Promise<void> {
     await lnpkg({
       ...opts,
       paths: parsePaths(args),
-      target: opts.target || process.cwd()
+      target: opts.dest || process.cwd()
     });
   } catch (error) {
     console.error(error instanceof Error ? error.toString() : error);
