@@ -1,6 +1,7 @@
 import { Command } from 'commander';
 import { description, name, version } from '../package.json';
 import { lnpkg } from './core/lnpkg';
+import { parsePaths } from './helpers/parse-paths';
 
 interface ProgramOptions {
   target: string;
@@ -37,7 +38,11 @@ export async function cli(): Promise<void> {
   }
   const opts = program.opts<ProgramOptions>();
   try {
-    await lnpkg({ ...opts, paths: args, target: opts.target || process.cwd() });
+    await lnpkg({
+      ...opts,
+      paths: parsePaths(args),
+      target: opts.target || process.cwd()
+    });
   } catch (error) {
     console.error(error instanceof Error ? error.toString() : error);
   }

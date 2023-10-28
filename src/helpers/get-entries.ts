@@ -18,21 +18,10 @@ export function getEntries(options: LnPkgOptions): Entry[] {
   if (paths.length === 0) {
     throw new Error('No paths specified.');
   }
-  const sep = ':';
   const entries: Entry[] = [];
-  for (let index = 0; index < paths.length; index++) {
-    const src = paths[index];
+  for (const src of paths) {
     if (typeof src === 'object') {
       add(entries, src);
-      continue;
-    } else if (src === sep || src.startsWith('-')) {
-      continue;
-    }
-    const next = paths[index + 1];
-    const dest = paths[index + 2];
-    if (next === sep && dest && typeof dest === 'string') {
-      add(entries, { src, dest });
-      index += 2;
     } else if (!target || typeof target !== 'string') {
       // check target
       throw new Error('Missing "target" path option.');
