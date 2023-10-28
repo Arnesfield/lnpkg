@@ -20,6 +20,7 @@ function createProgram() {
         'Separate with a colon to map specific packages:\n\n' +
         'lnpkg <src1> : <dest1> <src2> <src3> : <dest3> ...'
     )
+    .option('--dry-run', 'log only without performing operations (noop)')
     .option('-t, --to <dest>', 'the Node.js package to link', '.')
     .option(
       '-w, --watch',
@@ -29,7 +30,6 @@ function createProgram() {
       '-W, --watch-only',
       'skip linking packages and watch package files for changes only'
     )
-    .option('--dry-run', 'log only without performing operations')
     .version(`v${version}`, '-v, --version');
 }
 
