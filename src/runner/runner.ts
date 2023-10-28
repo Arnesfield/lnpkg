@@ -43,23 +43,35 @@ export class Runner {
     return chalk[this.color(pkg)].bold(pkg.json.name);
   }
 
-  getPrefix(link: PackageLink, watchMode = false): string[] {
+  getPrefix(
+    link: Partial<PackageLink>,
+    options: { time?: boolean; error?: boolean } = {}
+  ): string[] {
     const log =
       (this.options.dryRun ? '%s ' : '') +
-      (watchMode ? '[%s] ' : '') +
-      '%s %s %s:';
+      (options.error ? '%s ' : '') +
+      (options.time ? '[%s] ' : '') +
+      (link.src && link.dest ? '%s %s %s' : link.src || link.dest ? '%s' : '');
     const logs = [log];
     if (this.options.dryRun) {
       logs.push(chalk.bgBlack.yellow('dry'));
     }
-    if (watchMode) {
+    if (options.error) {
+      logs.push(chalk.bgBlack.red('ERR!'));
+    }
+    if (options.time) {
       logs.push(chalk.gray(formatTime(new Date())));
     }
-    logs.push(
-      this.getDisplayName(link.src),
-      chalk.red('→'),
-      this.getDisplayName(link.dest)
-    );
+    const pkg = link.src || link.dest;
+    if (link.src && link.dest) {
+      logs.push(
+        this.getDisplayName(link.src),
+        chalk.red('→'),
+        this.getDisplayName(link.dest)
+      );
+    } else if (pkg) {
+      logs.push(this.getDisplayName(pkg));
+    }
     return logs;
   }
 
@@ -80,7 +92,6 @@ export class Runner {
       chalk.dim(path.relative(cwd, link.getDestPath(file.filePath))) + ')'
     ];
 
-    const prefix = this.getPrefix(link, watchMode);
     const destFilePath = link.getDestPath(file.filePath);
     time.start('file');
     try {
@@ -93,12 +104,11 @@ export class Runner {
         log = false;
       }
       if (log) {
-        console.log(...prefix, ...logs());
+        console.log(...this.getPrefix(link, { time: watchMode }), ...logs());
       }
     } catch (error) {
       console.error(
-        ...prefix,
-        chalk.bgRed('error'),
+        ...this.getPrefix(link, { time: watchMode, error: true }),
         ...logs(),
         error instanceof Error ? error.toString() : error
       );
@@ -111,11 +121,6 @@ export class Runner {
       return;
     }
     const time = new Time();
-    const prefix = [
-      '[%s] %s:',
-      chalk.gray(formatTime(new Date())),
-      this.getDisplayName(pkg)
-    ];
     const logs = () => [
       chalk.bold.blue('init'),
       'Reinitialize package',
@@ -125,11 +130,10 @@ export class Runner {
 
     try {
       await pkg.init();
-      console.log(...prefix, ...logs());
+      console.log(...this.getPrefix({ src: pkg }, { time: true }), ...logs());
     } catch (error) {
       console.error(
-        ...prefix,
-        chalk.bgRed('error'),
+        ...this.getPrefix({ src: pkg }, { time: true, error: true }),
         ...logs(),
         error instanceof Error ? error.toString() : error
       );
