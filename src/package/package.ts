@@ -1,6 +1,6 @@
 import path from 'path';
 import { PackageFile, PackageJson } from '../types/package.types';
-import { simplifyPaths } from '../utils/simplify-paths';
+import { isPathDescendant, simplifyPaths } from '../utils/simplify-paths';
 import { readPackage } from './read-package';
 import { resolvePackageFiles } from './resolve-package-files';
 import { validatePackagePath } from './validate-package-path';
@@ -74,11 +74,12 @@ export class Package {
       this.files.find(file => file.path === filePath);
     if (!matchedFile) {
       // if no matched files, check if filePath is in package files
-      const isInPackage = simplifyPaths([this.path, filePath]).length === 1;
-      const isInPackageFiles = !simplifyPaths(
-        this.files.map(file => file.path).concat(filePath)
-      ).includes(filePath);
-      if (!(isInPackage && isInPackageFiles)) {
+      const isInPackage =
+        isPathDescendant(this.path, filePath) &&
+        !simplifyPaths(
+          this.files.map(file => file.path).concat(filePath)
+        ).exists(filePath);
+      if (!isInPackage) {
         return;
       }
     }
