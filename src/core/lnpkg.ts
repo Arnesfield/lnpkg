@@ -2,7 +2,7 @@ import chalk from 'chalk';
 import { watch } from 'chokidar';
 import { getEntries } from '../helpers/get-entries';
 import { Logger } from '../helpers/logger';
-import { createLinks } from '../link/create-links';
+import { createLinks } from '../link/link';
 import { Runner } from '../runner/runner';
 import { LnPkgOptions } from '../types/core.types';
 import { Queue } from '../utils/queue';

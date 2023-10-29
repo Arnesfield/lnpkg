@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import path from 'path';
+import { getDestPath } from '../helpers/get-dest-path';
 import { Logger, PrefixOptions } from '../helpers/logger';
 import { Link } from '../link/link';
 import { Package } from '../package/package';
@@ -60,6 +61,7 @@ export class Runner {
     }
   ) {
     const { link, file, nth, watchMode } = options;
+    const destFilePath = getDestPath(link, file.filePath);
     const cwd = process.cwd();
     const time = new Time();
     const prefix: PrefixOptions = {
@@ -74,10 +76,9 @@ export class Runner {
       chalk.yellow(time.diff('file')),
       '(' + chalk.dim(path.relative(cwd, file.path)),
       chalk.red('→'),
-      chalk.dim(path.relative(cwd, link.getDestPath(file.filePath))) + ')'
+      chalk.dim(path.relative(cwd, destFilePath)) + ')'
     ];
 
-    const destFilePath = link.getDestPath(file.filePath);
     time.start('file');
     try {
       let log = true;
