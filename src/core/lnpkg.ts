@@ -6,6 +6,7 @@ import { createLinks } from '../link/create-links';
 import { Runner } from '../runner/runner';
 import { LnPkgOptions } from '../types/core.types';
 import { Queue } from '../utils/queue';
+import { simplifyPaths } from '../utils/simplify-paths';
 import { Time } from '../utils/time';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
@@ -25,8 +26,10 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
   if (!options.watchOnly) {
     time.start('main');
     for (const link of links) {
-      const copy = link.src.files.map(file => runner.run(link, file, 'copy'));
-      await Promise.all(copy);
+      const promises = link.src.files.map(file => {
+        return runner.run('copy', { link, file });
+      });
+      await Promise.all(promises);
     }
     logger.log({ app: true }, 'Done:', chalk.yellow(time.diff('main')));
   }
@@ -34,11 +37,31 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     return;
   }
 
-  type EventName = 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
-  const queue = new Queue<{ event: EventName; path: string }>({
+  interface QueueItem {
+    event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
+    path: string;
+  }
+  const addEvents = ['add', 'addDir', 'change'];
+  const queue = new Queue<QueueItem>({
+    delay: 200,
     normalize(items) {
-      // TODO: filter out duplicate paths
-      return items;
+      const map = new WeakMap<QueueItem, string>();
+      const keys = items.map(item => {
+        // merge dir events
+        const event = addEvents.includes(item.event) ? 'add' : 'unlink';
+        const key = event + ':' + item.path;
+        map.set(item, key);
+        return key;
+      });
+      const result = simplifyPaths(keys);
+      const filtered: QueueItem[] = [];
+      for (const item of items) {
+        const key = map.get(item);
+        if (!key || !result.map[key]) {
+          filtered.push(item);
+        }
+      }
+      return filtered;
     },
     handle(item) {
       const isRemove = item.event === 'unlink' || item.event === 'unlinkDir';

@@ -22,18 +22,21 @@ export class Runner {
   constructor(options: RunnerOptions) {
     this.logger = options.logger;
     this.dryRun = options.dryRun;
-    this.queue = new Queue<Action>({ handle: item => this.handleAction(item) });
+    this.queue = new Queue<Action>({
+      handle: (item, index, total) => this.handleAction(item, { index, total })
+    });
   }
 
-  private async handleAction(item: Action) {
+  private async handleAction(item: Action, nth?: PrefixOptions['nth']) {
     if (item.type === 'init') {
-      await this.reinit(item.link.src);
+      await this.reinit(item.link.src, nth);
       return;
     }
     const file = item.link.src.getFile(item.filePath);
-    if (file) {
-      await this.run(item.link, file, item.type, true);
+    if (!file) {
+      return;
     }
+    await this.run(item.type, { nth, file, link: item.link, watchMode: true });
   }
 
   enqueue(item: Action): void {
@@ -41,15 +44,20 @@ export class Runner {
   }
 
   async run(
-    link: Link,
-    file: PackageFile,
     type: 'copy' | 'remove',
-    watchMode = false
+    options: {
+      link: Link;
+      file: PackageFile;
+      watchMode?: boolean;
+      nth?: PrefixOptions['nth'];
+    }
   ): Promise<void> {
+    const { link, file, nth, watchMode } = options;
     const cwd = process.cwd();
     const time = new Time();
     const prefix: PrefixOptions = {
       link,
+      nth,
       time: watchMode,
       dryRun: this.dryRun
     };
@@ -86,13 +94,16 @@ export class Runner {
     }
   }
 
-  protected async reinit(pkg: Package): Promise<void> {
+  protected async reinit(
+    pkg: Package,
+    nth?: PrefixOptions['nth']
+  ): Promise<void> {
     const file = pkg.getFile('package.json');
     if (!file) {
       return;
     }
     const time = new Time();
-    const prefix: PrefixOptions = { pkg, time: true, dryRun: this.dryRun };
+    const prefix: PrefixOptions = { pkg, nth, time: true, dryRun: this.dryRun };
     const logs = () => [
       chalk.bold.blue('init'),
       'Reinitialize package',

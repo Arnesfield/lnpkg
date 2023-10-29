@@ -1,8 +1,7 @@
 export interface QueueOptions<T> {
-  /** @default null */
-  delay?: number | null;
+  delay?: number;
   normalize?(items: T[]): T[];
-  handle(item: T): void | Promise<void>;
+  handle(item: T, index: number, total: number): void | Promise<void>;
 }
 
 export class Queue<T> {
@@ -45,9 +44,10 @@ export class Queue<T> {
     if (isRunning) {
       return;
     }
+    let index = -1;
     for (const item of this.items) {
       // NOTE: assume error handling in callback
-      await this.options.handle(item);
+      await this.options.handle(item, ++index, this.items.length);
     }
     // clear collections
     this.items.length = 0;
