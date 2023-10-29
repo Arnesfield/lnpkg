@@ -1,3 +1,5 @@
+import prettyMilliseconds from 'pretty-ms';
+
 export class Time {
   private readonly timeMap: { [key: string]: number } = {};
 
@@ -18,6 +20,9 @@ export class Time {
     if (!keep) {
       this.clear(key);
     }
-    return parseFloat(diff.toFixed(+(diff < 1))) + 'ms';
+    // show decimals for values less than a millisecond
+    return diff < 1
+      ? parseFloat(diff.toFixed(1)) + 'ms'
+      : prettyMilliseconds(diff);
   }
 }
