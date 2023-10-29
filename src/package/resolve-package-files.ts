@@ -38,5 +38,5 @@ export async function resolvePackageFiles(
     nocase: true,
     ignore: PACKAGE_FILES_IGNORE
   });
-  return simplifyPaths(pkgFiles).paths;
+  return simplifyPaths(pkgFiles).roots;
 }

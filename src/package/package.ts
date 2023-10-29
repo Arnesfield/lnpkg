@@ -76,9 +76,9 @@ export class Package {
       // if no matched files, check if filePath is in package files
       const isInPackage =
         isPathDescendant(this.path, filePath) &&
-        !simplifyPaths(
-          this.files.map(file => file.path).concat(filePath)
-        ).exists(filePath);
+        simplifyPaths(this.files.map(file => file.path).concat(filePath)).map[
+          filePath
+        ];
       if (!isInPackage) {
         return;
       }

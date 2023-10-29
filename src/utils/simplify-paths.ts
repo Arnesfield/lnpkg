@@ -4,13 +4,18 @@ function addSep(value: string) {
   return value + (value.endsWith(path.sep) ? '' : path.sep);
 }
 
-export function isPathDescendant(parent: string, descendant: string): boolean {
-  return addSep(descendant).startsWith(addSep(parent));
+export function isPathDescendant(
+  ancestor: string,
+  descendant: string
+): boolean {
+  return addSep(descendant).startsWith(addSep(ancestor));
 }
 
 export interface SimplifiedPaths {
-  paths: string[];
-  exists(path: string): boolean;
+  roots: string[];
+  descendants: string[];
+  /** Path -> parent path if any. */
+  map: { [path: string]: string | null };
 }
 
 /**
@@ -20,20 +25,31 @@ export interface SimplifiedPaths {
  * @returns The simplified paths result.
  */
 export function simplifyPaths(paths: string[]): SimplifiedPaths {
-  paths = Array.from(paths);
-  if (paths.length <= 1) {
-    return { paths, exists: () => true };
-  }
-  const exists: { [path: string]: boolean } = {};
-  // sort: intentionally mutate array
-  const simplifiedPaths = paths.sort().splice(0, 1);
-  let previous = simplifiedPaths[0];
-  for (const value of paths) {
-    exists[value] = !isPathDescendant(previous, path.dirname(value));
-    if (exists[value]) {
-      previous = value;
-      simplifiedPaths.push(value);
+  const map: SimplifiedPaths['map'] = {};
+  const sorted = paths.slice().sort();
+  let previous = sorted[0];
+  for (const value of sorted) {
+    const ancestor = addSep(previous);
+    const parent = addSep(path.dirname(value));
+    const descendant = addSep(value);
+    if (ancestor === descendant) {
+      map[value] = null;
+      continue;
     }
+    const isDescendant = parent.startsWith(ancestor);
+    map[value] = isDescendant ? previous : null;
+    previous = isDescendant ? previous : value;
   }
-  return { paths: simplifiedPaths, exists: path => exists[path] };
+
+  // add to sets after
+  const roots = new Set<string>();
+  const descendants = new Set<string>();
+  for (const value of paths) {
+    (map[value] ? descendants : roots).add(value);
+  }
+  return {
+    map,
+    roots: Array.from(roots),
+    descendants: Array.from(descendants)
+  };
 }
