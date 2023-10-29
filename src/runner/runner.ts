@@ -1,27 +1,28 @@
 import chalk from 'chalk';
 import path from 'path';
-import { Link, PackageLink } from '../link/link';
+import { Logger, PrefixOptions } from '../helpers/logger';
+import { Link } from '../link/link';
 import { Package } from '../package/package';
 import { PackageFile } from '../types/package.types';
-import { colors } from '../utils/colors';
-import { formatTime } from '../utils/format-time';
 import { cp, rm } from '../utils/fs.utils';
 import { Queue } from '../utils/queue';
 import { Time } from '../utils/time';
 import { Action } from './runner.types';
 
 export interface RunnerOptions {
+  logger: Logger;
   dryRun?: boolean;
 }
 
 export class Runner {
-  private readonly color = colors();
+  private readonly logger: Logger;
   private readonly queue: Queue<Action>;
+  private readonly dryRun?: boolean;
 
-  constructor(protected readonly options: RunnerOptions = {}) {
-    this.queue = new Queue<Action>({
-      handle: item => this.handleAction(item)
-    });
+  constructor(options: RunnerOptions) {
+    this.logger = options.logger;
+    this.dryRun = options.dryRun;
+    this.queue = new Queue<Action>({ handle: item => this.handleAction(item) });
   }
 
   private async handleAction(item: Action) {
@@ -39,42 +40,6 @@ export class Runner {
     this.queue.enqueue(item);
   }
 
-  getDisplayName(pkg: Package): string {
-    return chalk[this.color(pkg)].bold(pkg.json.name);
-  }
-
-  getPrefix(
-    link: Partial<PackageLink>,
-    options: { time?: boolean; error?: boolean } = {}
-  ): string[] {
-    const log =
-      (this.options.dryRun ? '%s ' : '') +
-      (options.error ? '%s ' : '') +
-      (options.time ? '[%s] ' : '') +
-      (link.src && link.dest ? '%s %s %s' : link.src || link.dest ? '%s' : '');
-    const logs = [log];
-    if (this.options.dryRun) {
-      logs.push(chalk.bgBlack.yellow('dry'));
-    }
-    if (options.error) {
-      logs.push(chalk.bgBlack.red('ERR!'));
-    }
-    if (options.time) {
-      logs.push(chalk.gray(formatTime(new Date())));
-    }
-    const pkg = link.src || link.dest;
-    if (link.src && link.dest) {
-      logs.push(
-        this.getDisplayName(link.src),
-        chalk.red('→'),
-        this.getDisplayName(link.dest)
-      );
-    } else if (pkg) {
-      logs.push(this.getDisplayName(pkg));
-    }
-    return logs;
-  }
-
   async run(
     link: Link,
     file: PackageFile,
@@ -83,6 +48,11 @@ export class Runner {
   ): Promise<void> {
     const cwd = process.cwd();
     const time = new Time();
+    const prefix: PrefixOptions = {
+      link,
+      time: watchMode,
+      dryRun: this.dryRun
+    };
     const logs = () => [
       chalk.bold[type === 'copy' ? 'blue' : 'magenta'](type),
       file.filePath,
@@ -96,7 +66,7 @@ export class Runner {
     time.start('file');
     try {
       let log = true;
-      if (this.options.dryRun) {
+      if (this.dryRun) {
         // do nothing
       } else if (type === 'copy') {
         await cp(file.path, destFilePath);
@@ -104,11 +74,12 @@ export class Runner {
         log = false;
       }
       if (log) {
-        console.log(...this.getPrefix(link, { time: watchMode }), ...logs());
+        this.logger.log(prefix, ...logs());
       }
     } catch (error) {
-      console.error(
-        ...this.getPrefix(link, { time: watchMode, error: true }),
+      prefix.error = true;
+      this.logger.error(
+        prefix,
         ...logs(),
         error instanceof Error ? error.toString() : error
       );
@@ -121,19 +92,21 @@ export class Runner {
       return;
     }
     const time = new Time();
+    const prefix: PrefixOptions = { pkg, time: true, dryRun: this.dryRun };
     const logs = () => [
       chalk.bold.blue('init'),
       'Reinitialize package',
       chalk.yellow(time.diff('file')),
-      '(' + chalk.dim(path.relative(process.cwd(), pkg.path)) + ')'
+      '(' + chalk.dim(path.relative(process.cwd(), pkg.path) || '.') + ')'
     ];
 
     try {
       await pkg.init();
-      console.log(...this.getPrefix({ src: pkg }, { time: true }), ...logs());
+      this.logger.log(prefix, ...logs());
     } catch (error) {
-      console.error(
-        ...this.getPrefix({ src: pkg }, { time: true, error: true }),
+      prefix.error = true;
+      this.logger.error(
+        prefix,
         ...logs(),
         error instanceof Error ? error.toString() : error
       );

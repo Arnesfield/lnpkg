@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import { watch } from 'chokidar';
-import { name } from '../../package.json';
 import { getEntries } from '../helpers/get-entries';
+import { Logger } from '../helpers/logger';
 import { createLinks } from '../link/create-links';
 import { Runner } from '../runner/runner';
 import { LnPkgOptions } from '../types/core.types';
@@ -9,27 +9,26 @@ import { Queue } from '../utils/queue';
 import { Time } from '../utils/time';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
+  const logger = new Logger();
   const time = new Time();
   time.start('links');
   const { links, total } = await createLinks(getEntries(options));
-  const displayName = chalk.bgBlack(name);
-  console.log(
-    '%s Loaded %o packages, %o %s:',
-    displayName,
+  logger.log(
+    { app: true, message: 'Loaded %o packages, %o %s:' },
     total,
     links.length,
     links.length === 1 ? 'link' : 'links',
     chalk.yellow(time.diff('links'))
   );
 
-  const runner = new Runner({ dryRun: options.dryRun });
+  const runner = new Runner({ logger, dryRun: options.dryRun });
   if (!options.watchOnly) {
     time.start('main');
     for (const link of links) {
       const copy = link.src.files.map(file => runner.run(link, file, 'copy'));
       await Promise.all(copy);
     }
-    console.log('%s Done:', displayName, chalk.yellow(time.diff('main')));
+    logger.log({ app: true }, 'Done:', chalk.yellow(time.diff('main')));
   }
   if (!options.watch && !options.watchOnly) {
     return;
@@ -65,5 +64,5 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     { ignoreInitial: true }
   ).on('all', (event, path) => queue.enqueue({ event, path }));
 
-  console.log('%s Watching for package file changes.', displayName);
+  logger.log({ app: true }, 'Watching for package file changes.');
 }
