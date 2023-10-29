@@ -43,7 +43,14 @@ export class Runner {
     this.queue.enqueue(item);
   }
 
-  async run(
+  async link(link: Link): Promise<void> {
+    const promises = link.src.files.map(file => {
+      return this.run('copy', { link, file });
+    });
+    await Promise.all(promises);
+  }
+
+  private async run(
     type: 'copy' | 'remove',
     options: {
       link: Link;
@@ -51,7 +58,7 @@ export class Runner {
       watchMode?: boolean;
       nth?: PrefixOptions['nth'];
     }
-  ): Promise<void> {
+  ) {
     const { link, file, nth, watchMode } = options;
     const cwd = process.cwd();
     const time = new Time();
@@ -94,10 +101,7 @@ export class Runner {
     }
   }
 
-  protected async reinit(
-    pkg: Package,
-    nth?: PrefixOptions['nth']
-  ): Promise<void> {
+  private async reinit(pkg: Package, nth?: PrefixOptions['nth']) {
     const file = pkg.getFile('package.json');
     if (!file) {
       return;

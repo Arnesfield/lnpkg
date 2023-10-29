@@ -26,10 +26,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
   if (!options.watchOnly) {
     time.start('main');
     for (const link of links) {
-      const promises = link.src.files.map(file => {
-        return runner.run('copy', { link, file });
-      });
-      await Promise.all(promises);
+      await runner.link(link);
     }
     logger.log({ app: true }, 'Done:', chalk.yellow(time.diff('main')));
   }
