@@ -71,7 +71,7 @@ export class Runner {
       dryRun: this.dryRun
     };
     const logs = () => [
-      chalk.bold[type === 'copy' ? 'blue' : 'magenta'](type),
+      chalk.bgBlack.bold[type === 'copy' ? 'blue' : 'magenta'](type),
       file.filePath,
       chalk.yellow(time.diff('file')),
       '(' + chalk.dim(path.relative(cwd, file.path)),
