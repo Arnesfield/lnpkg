@@ -60,7 +60,7 @@ export class Runner {
       params.push(
         chalk.dim(path.relative(cwd, link.src.path) || '.'),
         chalk.red('→'),
-        chalk.dim(path.relative(cwd, link.dest.path) || '.')
+        chalk.dim(path.relative(cwd, link.getDestPath()))
       );
 
       this.logger.error(
