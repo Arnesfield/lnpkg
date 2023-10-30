@@ -1,10 +1,21 @@
 // NOTE: internal
 
+export interface NameMap {
+  [name: string]: string;
+}
+
 export interface PackageJson {
   name: string;
   files?: string[];
   main?: string;
-  bin?: string | { [name: string]: string };
+  bin?: string | NameMap;
+
+  dependencies?: NameMap;
+  devDependencies?: NameMap;
+  peerDependencies?: NameMap;
+  bundleDependencies?: boolean | string[];
+  bundledDependencies?: boolean | string[];
+  optionalDependencies?: NameMap;
   [key: string]: unknown;
 }
 
