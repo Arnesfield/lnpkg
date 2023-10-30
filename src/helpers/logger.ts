@@ -31,7 +31,7 @@ export class Logger {
       prefix.push(chalk.bgBlack(name));
     }
     if (options.dryRun) {
-      prefix.push(chalk.bgBlack.yellow('dry'));
+      prefix.push(chalk.bgBlack.gray('nop'));
     }
     if (options.error) {
       prefix.push(chalk.bgBlack.red('ERR!'));

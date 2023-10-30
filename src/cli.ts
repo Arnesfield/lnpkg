@@ -21,7 +21,7 @@ function createProgram() {
         'Separate with a colon to map specific packages:\n\n' +
         'lnpkg <src1> : <dest1> <src2> <src3> : <dest3> ...'
     )
-    .option('--dry-run', 'log only without performing operations (noop)')
+    .option('-n, --dry-run', 'log only without performing operations (noop)')
     .option('-t, --to <dest>', 'the Node.js package to link', '.')
     .option(
       '-f, --force',
