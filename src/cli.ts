@@ -6,6 +6,7 @@ import { parsePaths } from './helpers/parse-paths';
 interface ProgramOptions {
   to: string;
   dryRun?: boolean;
+  force?: boolean;
   watch?: boolean;
   watchOnly?: boolean;
 }
@@ -22,6 +23,10 @@ function createProgram() {
     )
     .option('--dry-run', 'log only without performing operations (noop)')
     .option('-t, --to <dest>', 'the Node.js package to link', '.')
+    .option(
+      '-f, --force',
+      'allow link even if source package is not a dependency of destination package'
+    )
     .option(
       '-w, --watch',
       'watch package files for changes after linking packages'
@@ -45,6 +50,7 @@ export async function cli(): Promise<void> {
       paths: parsePaths(args),
       dest: opts.to || process.cwd(),
       dryRun: opts.dryRun,
+      force: opts.force,
       watch: opts.watch,
       watchOnly: opts.watchOnly
     });

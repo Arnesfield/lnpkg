@@ -22,15 +22,24 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     chalk.yellow(time.diff('links'))
   );
 
-  const runner = new Runner({ logger, dryRun: options.dryRun });
-  if (!options.watchOnly) {
+  const runner = new Runner(logger, {
+    dryRun: options.dryRun,
+    force: options.force
+  });
+  const runLink = !options.watchOnly;
+  if (runLink) {
     time.start('main');
-    for (const link of links) {
+  }
+  for (const link of links) {
+    if (runner.checkLink(link) && runLink) {
       await runner.link(link);
     }
+  }
+  if (runLink) {
     logger.log({ app: true }, 'Done:', chalk.yellow(time.diff('main')));
   }
-  if (!options.watch && !options.watchOnly) {
+
+  if (!options.watch && runLink) {
     return;
   }
 

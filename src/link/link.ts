@@ -1,4 +1,5 @@
 import path from 'path';
+import { hasDependency } from '../package/has-dependency';
 import { Package } from '../package/package';
 
 export class Link {
@@ -11,5 +12,10 @@ export class Link {
       this.src.json.name,
       ...paths
     );
+  }
+
+  // check if src a dependency of dest
+  isDependency(): boolean {
+    return hasDependency(this.dest.json, this.src.json.name);
   }
 }

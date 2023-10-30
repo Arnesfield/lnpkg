@@ -11,6 +11,7 @@ export interface PrefixOptions {
   app?: boolean;
   time?: boolean;
   error?: boolean;
+  warn?: boolean;
   dryRun?: boolean;
   message?: string;
   nth?: { index: number; total: number };
@@ -19,7 +20,7 @@ export interface PrefixOptions {
 export class Logger {
   private readonly color = colors();
 
-  private getDisplayName(pkg: Package) {
+  getDisplayName(pkg: Package): string {
     return chalk[this.color(pkg)].bold(pkg.json.name);
   }
 
@@ -34,6 +35,9 @@ export class Logger {
     }
     if (options.error) {
       prefix.push(chalk.bgBlack.red('ERR!'));
+    }
+    if (options.warn) {
+      prefix.push(chalk.bgBlack.yellow('WARN'));
     }
     if (options.time) {
       prefix.push('[' + chalk.gray(formatTime(new Date())) + ']');

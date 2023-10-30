@@ -10,18 +10,17 @@ import { Time } from '../utils/time';
 import { Action } from './runner.types';
 
 export interface RunnerOptions {
-  logger: Logger;
   dryRun?: boolean;
+  force?: boolean;
 }
 
 export class Runner {
-  private readonly logger: Logger;
   private readonly queue: Queue<Action>;
-  private readonly dryRun?: boolean;
 
-  constructor(options: RunnerOptions) {
-    this.logger = options.logger;
-    this.dryRun = options.dryRun;
+  constructor(
+    private readonly logger: Logger,
+    private readonly options: RunnerOptions
+  ) {
     this.queue = new Queue<Action>({
       handle: (item, index, total) => this.handleAction(item, { index, total })
     });
@@ -43,6 +42,41 @@ export class Runner {
     this.queue.enqueue(item);
   }
 
+  checkLink(link: Link): boolean {
+    const { force } = this.options;
+    const isDependency = link.isDependency();
+    if (!isDependency) {
+      const message = ['%s is not a dependency of %s.'];
+      const params = [
+        this.logger.getDisplayName(link.src),
+        this.logger.getDisplayName(link.dest)
+      ];
+      if (!force) {
+        message.push('Use %s option to allow this link.');
+        params.push(chalk.bold('--force'));
+      }
+      const cwd = process.cwd();
+      message.push('(%s %s %s)');
+      params.push(
+        chalk.dim(path.relative(cwd, link.src.path) || '.'),
+        chalk.red('→'),
+        chalk.dim(path.relative(cwd, link.dest.path) || '.')
+      );
+
+      this.logger.error(
+        {
+          link,
+          error: !force,
+          warn: force,
+          dryRun: this.options.dryRun,
+          message: message.join(' ')
+        },
+        ...params
+      );
+    }
+    return force || isDependency;
+  }
+
   async link(link: Link): Promise<void> {
     const promises = link.src.files.map(file => {
       return this.run('copy', { link, file });
@@ -60,6 +94,10 @@ export class Runner {
     }
   ) {
     const { link, file, nth, watchMode } = options;
+    if (!this.options.force && !link.isDependency()) {
+      // do nothing if not a dependency
+      return;
+    }
     const destFilePath = link.getDestPath(file.filePath);
     const cwd = process.cwd();
     const time = new Time();
@@ -67,7 +105,7 @@ export class Runner {
       link,
       nth,
       time: watchMode,
-      dryRun: this.dryRun
+      dryRun: this.options.dryRun
     };
     const logs = () => [
       chalk.bgBlack.bold[type === 'copy' ? 'blue' : 'magenta'](type),
@@ -81,7 +119,7 @@ export class Runner {
     time.start('file');
     try {
       let log = true;
-      if (this.dryRun) {
+      if (this.options.dryRun) {
         // do nothing
       } else if (type === 'copy') {
         await cp(file.path, destFilePath);
@@ -107,7 +145,12 @@ export class Runner {
       return;
     }
     const time = new Time();
-    const prefix: PrefixOptions = { pkg, nth, time: true, dryRun: this.dryRun };
+    const prefix: PrefixOptions = {
+      pkg,
+      nth,
+      time: true,
+      dryRun: this.options.dryRun
+    };
     const logs = () => [
       chalk.bold.blue('init'),
       'Reinitialize package',
