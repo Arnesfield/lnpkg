@@ -2,7 +2,6 @@ import chalk from 'chalk';
 import path from 'path';
 import { Logger, PrefixOptions } from '../helpers/logger';
 import { Link } from '../link/link';
-import { Package } from '../package/package';
 import { PackageFile } from '../types/package.types';
 import { cp, rm } from '../utils/fs.utils';
 import { Queue } from '../utils/queue';
@@ -28,7 +27,7 @@ export class Runner {
 
   private async handleAction(item: Action, nth?: PrefixOptions['nth']) {
     if (item.type === 'init') {
-      await this.reinit(item.link.src, nth);
+      await this.reinit(item.link, nth);
       return;
     }
     const file = item.link.src.getFile(item.filePath);
@@ -42,7 +41,10 @@ export class Runner {
     this.queue.enqueue(item);
   }
 
-  checkLink(link: Link): boolean {
+  checkLink(
+    link: Link,
+    options?: Pick<PrefixOptions, 'nth' | 'time'>
+  ): boolean {
     const { force } = this.options;
     const isDependency = link.isDependency();
     if (!isDependency) {
@@ -65,6 +67,7 @@ export class Runner {
 
       this.logger.error(
         {
+          ...options,
           link,
           error: !force,
           warn: force,
@@ -139,7 +142,8 @@ export class Runner {
     }
   }
 
-  private async reinit(pkg: Package, nth?: PrefixOptions['nth']) {
+  private async reinit(link: Link, nth?: PrefixOptions['nth']) {
+    const pkg = link.src;
     const file = pkg.getFile('package.json');
     if (!file) {
       return;
@@ -162,6 +166,7 @@ export class Runner {
     try {
       await pkg.init();
       this.logger.log(prefix, ...logs());
+      this.checkLink(link, { nth, time: true });
     } catch (error) {
       prefix.error = true;
       this.logger.error(
