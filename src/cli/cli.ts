@@ -1,7 +1,7 @@
 import { Command } from 'commander';
-import { description, name, version } from '../package.json';
-import { lnpkg } from './core/lnpkg';
-import { parsePaths } from './helpers/parse-paths';
+import { description, name, version } from '../../package.json';
+import { parsePaths } from '../helpers/parse-paths';
+import { main } from './main';
 
 interface ProgramOptions {
   to: string;
@@ -44,17 +44,11 @@ export async function cli(): Promise<void> {
   if (args.length === 0) {
     program.help();
   }
-  const opts = program.opts<ProgramOptions>();
+  const { to: dest, ...options } = program.opts<ProgramOptions>();
   try {
-    await lnpkg({
-      paths: parsePaths(args),
-      dest: opts.to || process.cwd(),
-      dryRun: opts.dryRun,
-      force: opts.force,
-      watch: opts.watch,
-      watchOnly: opts.watchOnly
-    });
+    await main(parsePaths(args), { dest, ...options });
   } catch (error) {
     console.error(error instanceof Error ? error.toString() : error);
+    process.exitCode = 1;
   }
 }

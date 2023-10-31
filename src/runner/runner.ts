@@ -152,12 +152,13 @@ export class Runner {
       dryRun: this.options.dryRun
     };
     const logs = () => [
-      chalk.bold.blue('init'),
-      'Reinitialize package',
-      chalk.yellow(time.diff('file')),
+      chalk.bgBlack.bold.green('init'),
+      'Reinitialize package.',
+      chalk.yellow(time.diff('init')),
       '(' + chalk.dim(path.relative(process.cwd(), pkg.path) || '.') + ')'
     ];
 
+    time.start('init');
     try {
       await pkg.init();
       this.logger.log(prefix, ...logs());
