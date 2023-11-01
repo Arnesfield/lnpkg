@@ -125,8 +125,8 @@ export class LnPkgClass implements LnPkg {
     return {
       close: async () => {
         // remove watcher
-        await watcher.close();
         this.watcher = undefined;
+        await watcher.close();
       }
     };
   }
