@@ -22,10 +22,7 @@ export class LnPkgClass implements LnPkg {
   private watcherQueue: Queue<WatcherPayload> | undefined;
 
   constructor(logger: Logger, private readonly options: LnPkgOptions) {
-    this.runner = new Runner(logger, {
-      dryRun: options.dryRun,
-      force: options.force
-    });
+    this.runner = new Runner(logger, options);
   }
 
   private getWatcherQueue() {
@@ -80,7 +77,11 @@ export class LnPkgClass implements LnPkg {
   ): Promise<Link[]> {
     // ensure unique links
     const links = new Set<Link>();
-    const entries = getEntries(items, this.options.dest || process.cwd());
+    const entries = getEntries({
+      items,
+      cwd: this.options.cwd,
+      dest: this.options.dest
+    });
     for (const entry of entries) {
       const existing = this.manager.get(entry);
       if (existing) {

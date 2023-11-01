@@ -1,16 +1,14 @@
 import chalk from 'chalk';
-import { LnPkgClass } from '../core/lnpkg.class';
-import { Logger } from '../helpers/logger';
+import { createInstance } from '../core/instance';
 import { MainOptions } from '../types/cli.types';
-import { Entry } from '../types/core.types';
+import { Entry, LnPkg } from '../types/core.types';
 import { Time } from '../utils/time';
 
 export async function main(
   paths: (string | Entry)[],
   options: MainOptions = {}
-): Promise<void> {
-  const logger = new Logger();
-  const lnpkg = new LnPkgClass(logger, options);
+): Promise<LnPkg> {
+  const { lnpkg, logger } = createInstance(options);
   const time = new Time();
 
   time.start('links');
@@ -37,4 +35,5 @@ export async function main(
     lnpkg.watch();
     logger.log({ app: true }, 'Watching for package file changes.');
   }
+  return lnpkg;
 }

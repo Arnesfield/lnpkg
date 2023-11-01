@@ -2,24 +2,25 @@ import chalk from 'chalk';
 import path from 'path';
 import { Logger, PrefixOptions } from '../helpers/logger';
 import { Link } from '../link/link';
+import { LnPkgOptions } from '../types/core.types';
 import { PackageFile } from '../types/package.types';
+import { cwd } from '../utils/cwd';
 import { cp, rm } from '../utils/fs.utils';
 import { Queue } from '../utils/queue';
 import { Time } from '../utils/time';
 import { Action } from './runner.types';
 
-export interface RunnerOptions {
-  dryRun?: boolean;
-  force?: boolean;
-}
+export interface RunnerOptions extends Exclude<LnPkgOptions, 'dest'> {}
 
 export class Runner {
+  private readonly cwd: string;
   private readonly queue: Queue<Action>;
 
   constructor(
     private readonly logger: Logger,
     private readonly options: RunnerOptions
   ) {
+    this.cwd = cwd(options.cwd);
     this.queue = new Queue<Action>({
       handle: (item, index, total) => this.handleAction(item, { index, total })
     });
@@ -57,12 +58,11 @@ export class Runner {
         message.push('Use %s option to allow this link.');
         params.push(chalk.bold('--force'));
       }
-      const cwd = process.cwd();
       message.push('(%s %s %s)');
       params.push(
-        chalk.dim(path.relative(cwd, link.src.path) || '.'),
+        chalk.dim(path.relative(this.cwd, link.src.path) || '.'),
         chalk.red('→'),
-        chalk.dim(path.relative(cwd, link.getDestPath()))
+        chalk.dim(path.relative(this.cwd, link.getDestPath()))
       );
 
       this.logger.error(
@@ -102,7 +102,6 @@ export class Runner {
       return;
     }
     const destFilePath = link.getDestPath(file.filePath);
-    const cwd = process.cwd();
     const time = new Time();
     const prefix: PrefixOptions = {
       link,
@@ -114,9 +113,9 @@ export class Runner {
       chalk.bgBlack.bold[type === 'copy' ? 'blue' : 'magenta'](type),
       file.filePath,
       chalk.yellow(time.diff('file')),
-      '(' + chalk.dim(path.relative(cwd, file.path)),
+      '(' + chalk.dim(path.relative(this.cwd, file.path)),
       chalk.red('→'),
-      chalk.dim(path.relative(cwd, destFilePath)) + ')'
+      chalk.dim(path.relative(this.cwd, destFilePath)) + ')'
     ];
 
     time.start('file');
@@ -159,7 +158,7 @@ export class Runner {
       chalk.bgBlack.bold.green('init'),
       'Reinitialize package.',
       chalk.yellow(time.diff('init')),
-      '(' + chalk.dim(path.relative(process.cwd(), pkg.path) || '.') + ')'
+      '(' + chalk.dim(path.relative(this.cwd, pkg.path) || '.') + ')'
     ];
 
     time.start('init');

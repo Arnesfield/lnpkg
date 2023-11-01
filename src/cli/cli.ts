@@ -5,6 +5,7 @@ import { main } from './main';
 
 interface ProgramOptions {
   to: string;
+  cwd?: string;
   dryRun?: boolean;
   force?: boolean;
   watch?: boolean;
@@ -23,6 +24,10 @@ function createProgram() {
     )
     .option('-n, --dry-run', 'log only without performing operations (noop)')
     .option('-t, --to <dest>', 'the Node.js package to link', '.')
+    .option(
+      '-C, --cwd <path>',
+      'run command as if it was started in <path> instead of the current working directory'
+    )
     .option(
       '-f, --force',
       'allow link even if source package is not a dependency of destination package'

@@ -14,6 +14,7 @@ export interface LnPkg {
 }
 
 export interface LnPkgOptions {
+  cwd?: string;
   dest?: string;
   dryRun?: boolean;
   force?: boolean;
