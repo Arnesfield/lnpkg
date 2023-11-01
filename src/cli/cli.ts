@@ -48,14 +48,19 @@ function createProgram() {
 }
 
 export async function cli(): Promise<void> {
-  const program = createProgram().parse();
-  const { args } = program;
-  if (args.length === 0) {
+  // if no args, show help
+  const program = createProgram();
+  if (process.argv.length <= 2) {
     program.help();
   }
-  const { to: dest, ...options } = program.opts<ProgramOptions>();
+  program.parse();
   try {
-    await main(parsePaths(args), { dest, ...options });
+    const paths = parsePaths(program.args);
+    if (paths.length === 0) {
+      throw new Error("No 'paths' provided.");
+    }
+    const { to: dest, ...options } = program.opts<ProgramOptions>();
+    await main(paths, { dest, ...options });
   } catch (error) {
     console.error(error instanceof Error ? error.toString() : error);
     process.exitCode = 1;
