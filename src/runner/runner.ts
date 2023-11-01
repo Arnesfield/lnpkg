@@ -71,7 +71,6 @@ export class Runner {
           link,
           error: !force,
           warn: force,
-          dryRun: this.options.dryRun,
           message: message.join(' ')
         },
         ...params
@@ -103,12 +102,7 @@ export class Runner {
     }
     const destFilePath = link.getDestPath(file.filePath);
     const time = new Time();
-    const prefix: PrefixOptions = {
-      link,
-      nth,
-      time: watchMode,
-      dryRun: this.options.dryRun
-    };
+    const prefix: PrefixOptions = { link, nth, time: watchMode };
     const logs = () => [
       chalk.bgBlack.bold[type === 'copy' ? 'blue' : 'magenta'](type),
       file.filePath,
@@ -129,6 +123,7 @@ export class Runner {
         log = false;
       }
       if (log) {
+        prefix.dryRun = this.options.dryRun;
         this.logger.log(prefix, ...logs());
       }
     } catch (error) {
