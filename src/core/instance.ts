@@ -1,12 +1,11 @@
 import { Logger } from '../helpers/logger';
-import { LnPkg, LnPkgOptions } from '../types/core.types';
+import { LnPkgOptions } from '../types/core.types';
 import { LnPkgClass } from './lnpkg.class';
 
 export function createInstance(options: LnPkgOptions): {
-  lnpkg: LnPkg;
+  instance: LnPkgClass;
   logger: Logger;
 } {
   const logger = new Logger();
-  const lnpkg = new LnPkgClass(logger, options);
-  return { lnpkg, logger };
+  return { instance: new LnPkgClass(logger, options), logger };
 }

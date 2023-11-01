@@ -8,12 +8,12 @@ export async function main(
   paths: (string | Entry)[],
   options: MainOptions = {}
 ): Promise<LnPkg> {
-  const { lnpkg, logger } = createInstance(options);
+  const { instance, logger } = createInstance(options);
   const time = new Time();
 
   time.start('links');
-  await lnpkg.add(paths);
-  const count = lnpkg.count();
+  const links = await instance.add(paths);
+  const count = instance.lnpkg.count();
   logger.log(
     { app: true, message: 'Loaded %o packages, %o %s:' },
     count.packages,
@@ -22,18 +22,17 @@ export async function main(
     chalk.yellow(time.diff('links'))
   );
 
-  const { watchOnly } = options;
-  if (!watchOnly) {
+  if (options.watchOnly) {
+    instance.check(links);
+  } else {
     time.start('main');
-  }
-  await lnpkg.link(paths, watchOnly);
-  if (!watchOnly) {
+    await instance.link(links);
     logger.log({ app: true }, 'Done:', chalk.yellow(time.diff('main')));
   }
 
-  if (options.watch || watchOnly) {
-    lnpkg.watch();
+  if (options.watch || options.watchOnly) {
+    instance.watch();
     logger.log({ app: true }, 'Watching for package file changes.');
   }
-  return lnpkg;
+  return instance.lnpkg;
 }

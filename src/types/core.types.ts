@@ -6,10 +6,7 @@ export interface Entry {
 export interface LnPkg {
   count(): { links: number; packages: number };
   add(paths: string | Entry | (string | Entry)[]): Promise<void>;
-  link(
-    paths: string | Entry | (string | Entry)[],
-    checkOnly?: boolean
-  ): Promise<void>;
+  link(paths: string | Entry | (string | Entry)[]): Promise<void>;
   watch(): { close(): Promise<void> };
 }
 

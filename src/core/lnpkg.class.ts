@@ -15,11 +15,22 @@ interface WatcherPayload {
   path: string;
 }
 
-export class LnPkgClass implements LnPkg {
+export class LnPkgClass {
   private readonly manager = new Manager();
   private readonly runner: Runner;
   private watcher: FSWatcher | undefined;
   private watcherQueue: Queue<WatcherPayload> | undefined;
+
+  readonly lnpkg: LnPkg = {
+    count: () => this.manager.count(),
+    add: async paths => {
+      await this.add(paths);
+    },
+    link: async paths => {
+      await this.link(await this.add(paths));
+    },
+    watch: () => this.watch()
+  };
 
   constructor(logger: Logger, private readonly options: LnPkgOptions) {
     this.runner = new Runner(logger, options);
@@ -72,9 +83,7 @@ export class LnPkgClass implements LnPkg {
     return this.watcherQueue;
   }
 
-  private async createLinks(
-    items: string | Entry | (string | Entry)[]
-  ): Promise<Link[]> {
+  async add(items: string | Entry | (string | Entry)[]): Promise<Link[]> {
     // ensure unique links
     const links = new Set<Link>();
     const entries = getEntries({
@@ -96,21 +105,15 @@ export class LnPkgClass implements LnPkg {
     return Array.from(links);
   }
 
-  count(): { links: number; packages: number } {
-    return this.manager.count();
-  }
-
-  async add(paths: string | Entry | (string | Entry)[]): Promise<void> {
-    await this.createLinks(paths);
-  }
-
-  async link(
-    paths: string | Entry | (string | Entry)[],
-    checkOnly = false
-  ): Promise<void> {
-    const links = await this.createLinks(paths);
+  check(links: Link[]): void {
     for (const link of links) {
-      if (this.runner.checkLink(link) && !checkOnly) {
+      this.runner.checkLink(link);
+    }
+  }
+
+  async link(links: Link[]): Promise<void> {
+    for (const link of links) {
+      if (this.runner.checkLink(link)) {
         await this.runner.link(link);
       }
     }
