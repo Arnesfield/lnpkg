@@ -23,10 +23,12 @@ function defineConfig(options: (false | RollupOptions)[]) {
 export default defineConfig([
   {
     input,
-    output: [
-      { file: pkg.main, format: 'cjs', exports: 'named', sourcemap: PROD },
-      { file: pkg.module, format: 'esm', exports: 'named', sourcemap: PROD }
-    ],
+    output: {
+      file: pkg.module,
+      format: 'esm',
+      exports: 'named',
+      sourcemap: PROD
+    },
     plugins: [esbuild(), json(), externals(), outputSize()]
   },
   {
