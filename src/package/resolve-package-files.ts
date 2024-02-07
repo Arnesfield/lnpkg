@@ -1,6 +1,7 @@
 import { glob } from 'glob';
 import {
-  PACKAGE_FILES_IGNORE,
+  PACKAGE_FILES_IGNORE_ALWAYS,
+  PACKAGE_FILES_IGNORE_DEFAULT,
   PACKAGE_FILES_INCLUDE
 } from '../constants/package.constants';
 import { PackageJson } from '../types/package.types';
@@ -17,7 +18,8 @@ export async function resolvePackageFiles(
   pkgPath: string,
   pkg: PackageJson
 ): Promise<string[]> {
-  const files = Array.isArray(pkg.files) ? pkg.files : ['*'];
+  const hasFiles = Array.isArray(pkg.files);
+  const files = hasFiles ? (pkg.files as string[]) : ['*'];
   files.push(...PACKAGE_FILES_INCLUDE);
   if (pkg.main) {
     files.push(pkg.main);
@@ -36,7 +38,9 @@ export async function resolvePackageFiles(
     cwd: pkgPath,
     dot: true,
     nocase: true,
-    ignore: PACKAGE_FILES_IGNORE
+    ignore: hasFiles
+      ? PACKAGE_FILES_IGNORE_ALWAYS
+      : PACKAGE_FILES_IGNORE_DEFAULT
   });
   return simplifyPaths(pkgFiles).roots;
 }

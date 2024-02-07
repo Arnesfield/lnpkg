@@ -12,20 +12,25 @@ export const PACKAGE_FILES_INCLUDE = [
   'LICENCE.*'
 ];
 
-export const PACKAGE_FILES_IGNORE = [
+export const PACKAGE_FILES_IGNORE_ALWAYS = [
   '.git',
-  'CVS',
-  '.svn',
-  '.hg',
-  '.lock-wscript',
-  '.wafpickle-N',
+  '.npmrc',
+  'node_modules',
+  'package-lock.json',
+  'pnpm-lock.yaml',
+  'yarn.lock'
+];
+
+export const PACKAGE_FILES_IGNORE_DEFAULT = [
+  '*.orig',
   '.*.swp',
   '.DS_Store',
   '._*',
-  'npm-debug.log',
-  '.npmrc',
-  'node_modules',
+  '.hg',
+  '.lock-wscript',
+  '.svn',
+  '.wafpickle-N',
+  'CVS',
   'config.gypi',
-  '*.orig',
-  'package-lock.json'
-];
+  'npm-debug.log'
+].concat(PACKAGE_FILES_IGNORE_ALWAYS);
