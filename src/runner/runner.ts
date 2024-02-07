@@ -6,40 +6,19 @@ import { LnPkgOptions } from '../types/core.types';
 import { PackageFile } from '../types/package.types';
 import { cwd } from '../utils/cwd';
 import { cp, rm } from '../utils/fs.utils';
-import { Queue } from '../utils/queue';
 import { Time } from '../utils/time';
-import { Action } from './runner.types';
 
-export interface RunnerOptions extends Exclude<LnPkgOptions, 'dest'> {}
+export interface RunnerOptions
+  extends Pick<LnPkgOptions, 'cwd' | 'dryRun' | 'force'> {}
 
 export class Runner {
   private readonly cwd: string;
-  private readonly queue: Queue<Action>;
 
   constructor(
     private readonly logger: Logger,
     private readonly options: RunnerOptions
   ) {
     this.cwd = cwd(options.cwd);
-    this.queue = new Queue<Action>({
-      handle: (item, index, total) => this.handleAction(item, { index, total })
-    });
-  }
-
-  private async handleAction(item: Action, nth?: PrefixOptions['nth']) {
-    if (item.type === 'init') {
-      await this.reinit(item.link, nth);
-      return;
-    }
-    const file = item.link.src.getFile(item.filePath);
-    if (!file) {
-      return;
-    }
-    await this.run(item.type, { nth, file, link: item.link, watchMode: true });
-  }
-
-  enqueue(item: Action): void {
-    this.queue.enqueue(item);
   }
 
   checkLink(
@@ -86,7 +65,7 @@ export class Runner {
     await Promise.all(promises);
   }
 
-  private async run(
+  async run(
     type: 'copy' | 'remove',
     options: {
       link: Link;
@@ -94,7 +73,7 @@ export class Runner {
       watchMode?: boolean;
       nth?: PrefixOptions['nth'];
     }
-  ) {
+  ): Promise<void> {
     const { link, file, nth, watchMode } = options;
     if (!this.options.force && !link.isDependency()) {
       // do nothing if not a dependency
@@ -136,7 +115,7 @@ export class Runner {
     }
   }
 
-  private async reinit(link: Link, nth?: PrefixOptions['nth']) {
+  async reinit(link: Link, nth?: PrefixOptions['nth']): Promise<void> {
     const pkg = link.src;
     const file = pkg.getFile('package.json');
     if (!file) {

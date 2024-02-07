@@ -9,16 +9,6 @@ export class Manager {
   } = {};
   private readonly packageMap: { [path: string]: Package | undefined } = {};
 
-  private add(link: Link) {
-    // save to map and lookup
-    this.packageMap[link.src.path] = link.src;
-    this.packageMap[link.dest.path] = link.dest;
-    const srcMap = (this.linkLookup[link.src.path] ||= {});
-    srcMap[link.dest.path] = link;
-    this.links.push(link);
-    return link;
-  }
-
   count(): { links: number; packages: number } {
     return {
       links: this.links.length,
@@ -26,12 +16,28 @@ export class Manager {
     };
   }
 
-  get(entry: Entry): Link | undefined {
+  async add(entries: Entry[]): Promise<Link[]> {
+    // ensure unique links
+    const links = new Set<Link>();
+    for (const entry of entries) {
+      const existing = this.get(entry);
+      if (existing) {
+        links.add(existing);
+        continue;
+      }
+      const link = await this.create(entry);
+      // NOTE: should add new link to watcher when necessary
+      links.add(link);
+    }
+    return Array.from(links);
+  }
+
+  private get(entry: Entry): Link | undefined {
     const srcMap = (this.linkLookup[entry.src] ||= {});
     return srcMap[entry.dest];
   }
 
-  async create(entry: Entry): Promise<Link> {
+  private async create(entry: Entry) {
     const exists = {
       src: this.packageMap[entry.src],
       dest: this.packageMap[entry.dest]
@@ -45,6 +51,16 @@ export class Manager {
       await dest.init();
     }
     await src.loadFiles();
-    return this.add(new Link(src, dest));
+    return this.save(new Link(src, dest));
+  }
+
+  private save(link: Link) {
+    // save to map and lookup
+    this.packageMap[link.src.path] = link.src;
+    this.packageMap[link.dest.path] = link.dest;
+    const srcMap = (this.linkLookup[link.src.path] ||= {});
+    srcMap[link.dest.path] = link;
+    this.links.push(link);
+    return link;
   }
 }

@@ -3,16 +3,12 @@ export interface Entry {
   dest: string;
 }
 
-export interface LnPkg {
-  count(): { links: number; packages: number };
-  add(paths: string | Entry | (string | Entry)[]): Promise<void>;
-  link(paths: string | Entry | (string | Entry)[]): Promise<void>;
-  watch(): { close(): Promise<void> };
-}
-
 export interface LnPkgOptions {
+  paths: (string | Entry)[];
   cwd?: string;
   dest?: string;
   dryRun?: boolean;
   force?: boolean;
+  watch?: boolean;
+  watchOnly?: boolean;
 }

@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import { description, name, version } from '../../package.json';
+import { lnpkg } from '../core/lnpkg';
 import { parsePaths } from '../helpers/parse-paths';
-import { main } from './main';
 
 interface ProgramOptions {
   to: string;
@@ -60,7 +60,7 @@ export async function cli(): Promise<void> {
       throw new Error("No 'paths' provided.");
     }
     const { to: dest, ...options } = program.opts<ProgramOptions>();
-    await main(paths, { dest, ...options });
+    await lnpkg({ paths, dest, ...options });
   } catch (error) {
     console.error(error instanceof Error ? error.toString() : error);
     process.exitCode = 1;

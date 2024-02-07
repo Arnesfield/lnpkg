@@ -21,3 +21,8 @@ interface RemoveAction extends BaseAction {
 }
 
 export type Action = InitAction | CopyAction | RemoveAction;
+
+export interface WatcherPayload {
+  event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
+  path: string;
+}
