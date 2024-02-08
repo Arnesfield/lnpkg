@@ -1,9 +1,17 @@
 import chalk from 'chalk';
+import path from 'path';
 import { name } from '../../package.json';
 import { Link } from '../link/link';
 import { Package } from '../package/package';
 import { colors } from '../utils/colors';
 import { formatTime } from '../utils/format-time';
+
+export interface GetPathLinkOptions {
+  cwd: string;
+  source: string;
+  target: string;
+  wrap?: boolean;
+}
 
 export interface PrefixOptions {
   pkg?: Package;
@@ -22,6 +30,15 @@ export class Logger {
 
   getDisplayName(pkg: Package): string {
     return chalk[this.color(pkg)].bold(pkg.json.name);
+  }
+
+  getPathLink(options: GetPathLinkOptions): string[] {
+    const { cwd, source, target, wrap } = options;
+    return [
+      (wrap ? '(' : '') + chalk.dim(path.relative(cwd, source) || '.'),
+      chalk.red('→'),
+      chalk.dim(path.relative(cwd, target)) + (wrap ? ')' : '')
+    ];
   }
 
   prefix(options: PrefixOptions): string {

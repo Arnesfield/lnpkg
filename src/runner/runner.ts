@@ -26,8 +26,15 @@ export class Runner {
     options?: Pick<PrefixOptions, 'nth' | 'time'>
   ): boolean {
     const { force } = this.options;
+    const pathLink = this.logger.getPathLink({
+      cwd: this.cwd,
+      source: link.src.path,
+      target: link.getDestPath()
+    });
     const isDependency = link.isDependency();
-    if (!isDependency) {
+    if (isDependency) {
+      this.logger.log({ link }, ...pathLink);
+    } else {
       const message = ['%s is not a dependency of %s.'];
       const params = [
         this.logger.getDisplayName(link.src),
@@ -38,11 +45,6 @@ export class Runner {
         params.push(chalk.bold('--force'));
       }
       message.push('(%s %s %s)');
-      params.push(
-        chalk.dim(path.relative(this.cwd, link.src.path) || '.'),
-        chalk.red('→'),
-        chalk.dim(path.relative(this.cwd, link.getDestPath()))
-      );
 
       this.logger.error(
         {
@@ -52,7 +54,8 @@ export class Runner {
           warn: force,
           message: message.join(' ')
         },
-        ...params
+        ...params,
+        ...pathLink
       );
     }
     return force || isDependency;
@@ -85,10 +88,7 @@ export class Runner {
     const logs = () => [
       chalk.bgBlack.bold[type === 'copy' ? 'blue' : 'magenta'](type),
       file.filePath,
-      chalk.yellow(time.diff('file')),
-      '(' + chalk.dim(path.relative(this.cwd, file.path)),
-      chalk.red('→'),
-      chalk.dim(path.relative(this.cwd, destFilePath)) + ')'
+      chalk.yellow(time.diff('file'))
     ];
 
     time.start('file');
