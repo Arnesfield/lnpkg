@@ -8,7 +8,7 @@ export interface LnPkgOptions {
   to?: string | string[];
   cwd?: string;
   dryRun?: boolean;
-  force?: boolean;
+  ndeps?: boolean | null;
   watch?: boolean;
   watchOnly?: boolean;
 }

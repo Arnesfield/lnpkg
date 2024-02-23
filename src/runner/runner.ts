@@ -9,7 +9,7 @@ import { cp, rm } from '../utils/fs.utils';
 import { Time } from '../utils/time';
 
 export interface RunnerOptions
-  extends Pick<LnPkgOptions, 'cwd' | 'dryRun' | 'force'> {}
+  extends Pick<LnPkgOptions, 'cwd' | 'dryRun' | 'ndeps'> {}
 
 export class Runner {
   private readonly cwd: string;
@@ -25,7 +25,7 @@ export class Runner {
     link: Link,
     options?: Pick<PrefixOptions, 'nth' | 'time'>
   ): boolean {
-    const { force } = this.options;
+    const { ndeps } = this.options;
     const pathLink = this.logger.getPathLink({
       cwd: this.cwd,
       source: link.src.path,
@@ -34,15 +34,15 @@ export class Runner {
     const isDependency = link.isDependency();
     if (isDependency) {
       this.logger.log({ link }, ...pathLink);
-    } else {
+    } else if (ndeps !== false) {
       const message = ['%s is not a dependency of %s.'];
       const params = [
         this.logger.getDisplayName(link.src),
         this.logger.getDisplayName(link.dest)
       ];
-      if (!force) {
+      if (!ndeps) {
         message.push('Use %s option to allow this link.');
-        params.push(chalk.bold('--force'));
+        params.push(chalk.bold('--ndeps'));
       }
       message.push('(%s %s %s)');
 
@@ -50,15 +50,15 @@ export class Runner {
         {
           ...options,
           link,
-          error: !force,
-          warn: force,
+          error: !ndeps,
+          warn: !!ndeps,
           message: message.join(' ')
         },
         ...params,
         ...pathLink
       );
     }
-    return force || isDependency;
+    return ndeps || isDependency;
   }
 
   async link(link: Link): Promise<void> {
@@ -78,7 +78,7 @@ export class Runner {
     }
   ): Promise<void> {
     const { link, file, nth, watchMode } = options;
-    if (!this.options.force && !link.isDependency()) {
+    if (!this.options.ndeps && !link.isDependency()) {
       // do nothing if not a dependency
       return;
     }

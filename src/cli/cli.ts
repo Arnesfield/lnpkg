@@ -7,7 +7,7 @@ interface ProgramOptions {
   to: string[] | undefined;
   cwd?: string;
   dryRun?: boolean;
-  force?: boolean;
+  ndeps?: boolean | undefined; // 3 states
   watch?: boolean;
   watchOnly?: boolean;
 }
@@ -33,8 +33,12 @@ function createProgram() {
       'run command as if it was started in <path> instead of the current working directory'
     )
     .option(
-      '-f, --force',
+      '-f, --ndeps',
       'allow link even if source package is not a dependency of destination package'
+    )
+    .option(
+      '-s, --no-ndeps',
+      'skip link if source package is not a dependency of destination package'
     )
     .option(
       '-w, --watch',
