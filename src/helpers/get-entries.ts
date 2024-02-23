@@ -10,9 +10,13 @@ export interface GetEntriesOptions
 export function getEntries(options: GetEntriesOptions): Entry[] {
   const dir = cwd(options.cwd);
   const entries: Entry[] = [];
+  const paths = Array.isArray(options.to)
+    ? options.to
+    : typeof options.to === 'string'
+    ? [options.to]
+    : [];
   // NOTE: duplicates not filtered out
-  for (const to of Array.isArray(options.to) ? options.to : []) {
-    const dest = path.resolve(dir, to);
+  for (const dest of paths) {
     for (const src of options.paths) {
       const entry: Entry = typeof src === 'object' ? { ...src } : { src, dest };
       entry.src = path.resolve(dir, entry.src);
