@@ -5,8 +5,8 @@ export interface Entry {
 
 export interface LnPkgOptions {
   paths: (string | Entry)[];
+  to?: string[];
   cwd?: string;
-  dest?: string;
   dryRun?: boolean;
   force?: boolean;
   watch?: boolean;

@@ -4,7 +4,7 @@ import { lnpkg } from '../core/lnpkg';
 import { parsePaths } from '../helpers/parse-paths';
 
 interface ProgramOptions {
-  to: string;
+  to: string[] | undefined;
   cwd?: string;
   dryRun?: boolean;
   force?: boolean;
@@ -16,6 +16,7 @@ function createProgram() {
   return new Command()
     .name(name)
     .description(description)
+    .usage('[paths...] [options]')
     .argument(
       '[paths...]',
       'paths of source packages to link.\n' +
@@ -24,9 +25,8 @@ function createProgram() {
     )
     .option('-n, --dry-run', 'log only without performing operations (noop)')
     .option(
-      '-t, --to <path>',
-      'the default destination package to link source packages to',
-      '.'
+      '-t, --to <paths...>',
+      'the destination package(s) to link source packages to'
     )
     .option(
       '-C, --cwd <path>',
@@ -59,8 +59,8 @@ export async function cli(): Promise<void> {
     if (paths.length === 0) {
       throw new Error("No 'paths' provided.");
     }
-    const { to: dest, ...options } = program.opts<ProgramOptions>();
-    await lnpkg({ paths, dest, ...options });
+    const { to, ...options } = program.opts<ProgramOptions>();
+    await lnpkg({ paths, ...options, to: Array.isArray(to) ? to : ['.'] });
   } catch (error) {
     console.error(error instanceof Error ? error.toString() : error);
     process.exitCode = 1;
