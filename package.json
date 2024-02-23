@@ -1,7 +1,7 @@
 {
   "name": "lnpkg",
   "version": "0.0.1",
-  "description": "Link local Node.js packages for local development.",
+  "description": "Link local Node.js packages.",
   "homepage": "https://github.com/Arnesfield/lnpkg#readme",
   "bugs": {
     "url": "https://github.com/Arnesfield/lnpkg/issues"

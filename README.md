@@ -1,5 +1,5 @@
 # lnpkg
 
-Link local Node.js packages for local development.
+Link local Node.js packages.
 
 > TODO: work on README
