@@ -9,7 +9,7 @@ import { cp, rm } from '../utils/fs.utils';
 import { Time } from '../utils/time';
 
 export interface RunnerOptions
-  extends Pick<LnPkgOptions, 'cwd' | 'dryRun' | 'ndeps'> {}
+  extends Pick<LnPkgOptions, 'cwd' | 'dryRun' | 'force' | 'skip'> {}
 
 export class Runner {
   private readonly cwd: string;
@@ -25,7 +25,7 @@ export class Runner {
     link: Link,
     options?: Pick<PrefixOptions, 'nth' | 'time'>
   ): boolean {
-    const { ndeps } = this.options;
+    const { force, skip } = this.options;
     const pathLink = this.logger.getPathLink({
       cwd: this.cwd,
       source: link.src.path,
@@ -34,15 +34,15 @@ export class Runner {
     const isDependency = link.isDependency();
     if (isDependency) {
       this.logger.log({ link }, ...pathLink);
-    } else if (ndeps !== false) {
+    } else if (!skip) {
       const message = ['%s is not a dependency of %s.'];
       const params = [
         this.logger.getDisplayName(link.src),
         this.logger.getDisplayName(link.dest)
       ];
-      if (!ndeps) {
+      if (!force) {
         message.push('Use %s option to allow this link.');
-        params.push(chalk.bold('--ndeps'));
+        params.push(chalk.bold('--force'));
       }
       message.push('(%s %s %s)');
 
@@ -50,15 +50,15 @@ export class Runner {
         {
           ...options,
           link,
-          error: !ndeps,
-          warn: !!ndeps,
+          error: !force,
+          warn: force,
           message: message.join(' ')
         },
         ...params,
         ...pathLink
       );
     }
-    return ndeps || isDependency;
+    return force || isDependency;
   }
 
   async link(link: Link): Promise<void> {
@@ -77,8 +77,9 @@ export class Runner {
       nth?: PrefixOptions['nth'];
     }
   ): Promise<void> {
+    const { dryRun, force, skip } = this.options;
     const { link, file, nth, watchMode } = options;
-    if (!this.options.ndeps && !link.isDependency()) {
+    if ((!force || skip) && !link.isDependency()) {
       // do nothing if not a dependency
       return;
     }
@@ -94,7 +95,7 @@ export class Runner {
     time.start('file');
     try {
       let log = true;
-      if (this.options.dryRun) {
+      if (dryRun) {
         // do nothing
       } else if (type === 'copy') {
         await cp(file.path, destFilePath);
@@ -102,7 +103,7 @@ export class Runner {
         log = false;
       }
       if (log) {
-        prefix.dryRun = this.options.dryRun;
+        prefix.dryRun = dryRun;
         this.logger.log(prefix, ...logs());
       }
     } catch (error) {

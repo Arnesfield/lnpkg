@@ -1,4 +1,4 @@
-import { Command } from 'commander';
+import { Command, Option } from 'commander';
 import { description, name, version } from '../../package.json';
 import { lnpkg } from '../core/lnpkg';
 import { parsePaths } from '../helpers/parse-paths';
@@ -7,7 +7,8 @@ interface ProgramOptions {
   to: string[] | undefined;
   cwd?: string;
   dryRun?: boolean;
-  ndeps?: boolean | undefined; // 3 states
+  force?: boolean;
+  skip?: boolean;
   watch?: boolean;
   watchOnly?: boolean;
 }
@@ -32,12 +33,14 @@ function createProgram() {
       '-C, --cwd <path>',
       'run command as if it was started in <path> instead of the current working directory'
     )
-    .option(
-      '-f, --ndeps',
-      'allow link even if source package is not a dependency of destination package'
+    .addOption(
+      new Option(
+        '-f, --force',
+        'allow link even if source package is not a dependency of destination package'
+      ).conflicts('skip')
     )
     .option(
-      '-s, --no-ndeps',
+      '-s, --skip',
       'skip link if source package is not a dependency of destination package'
     )
     .option(
