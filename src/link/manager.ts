@@ -16,28 +16,13 @@ export class Manager {
     };
   }
 
-  async add(entries: Entry[]): Promise<Link[]> {
-    // ensure unique links
-    const links = new Set<Link>();
-    for (const entry of entries) {
-      const existing = this.get(entry);
-      if (existing) {
-        links.add(existing);
-        continue;
-      }
-      const link = await this.create(entry);
-      // NOTE: should add new link to watcher when necessary
-      links.add(link);
-    }
-    return Array.from(links);
-  }
-
-  private get(entry: Entry): Link | undefined {
+  get(entry: Entry): Link | undefined {
     const srcMap = (this.linkLookup[entry.src] ||= {});
     return srcMap[entry.dest];
   }
 
-  private async create(entry: Entry) {
+  // NOTE: should add new link to watcher when necessary
+  async create(entry: Entry): Promise<Link> {
     const exists = {
       src: this.packageMap[entry.src],
       dest: this.packageMap[entry.dest]

@@ -23,7 +23,7 @@ export class Runner {
 
   checkLink(
     link: Link,
-    options?: Pick<PrefixOptions, 'nth' | 'time'>
+    options?: Pick<PrefixOptions, 'nth' | 'time' | 'message'>
   ): boolean {
     const { force, skip } = this.options;
     const pathLink = this.logger.getPathLink({
@@ -33,7 +33,14 @@ export class Runner {
     });
     const isDependency = link.isDependency();
     if (isDependency) {
-      this.logger.log({ link }, ...pathLink);
+      const message = ['%s %s %s'];
+      if (options?.message) {
+        message.push(options.message);
+      }
+      this.logger.log(
+        { ...options, link, message: message.join(' ') },
+        ...pathLink
+      );
     } else if (!skip) {
       const message = ['%s is not a dependency of %s.'];
       const params = [
@@ -45,6 +52,9 @@ export class Runner {
         params.push(chalk.bold('--force'));
       }
       message.push('(%s %s %s)');
+      if (options?.message) {
+        message.push(options.message);
+      }
 
       this.logger.error(
         {
