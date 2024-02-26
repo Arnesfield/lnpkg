@@ -141,16 +141,15 @@ export class Runner {
     };
     const logs = () => [
       chalk.bgBlack.bold.green('init'),
-      'Reinitialize package.',
-      chalk.yellow(time.diff('init')),
-      '(' + chalk.dim(path.relative(this.cwd, pkg.path) || '.') + ')'
+      'Reinitialize package:',
+      chalk.dim(path.relative(this.cwd, pkg.path) || '.'),
+      chalk.yellow(time.diff('init'))
     ];
 
     time.start('init');
     try {
       await pkg.init();
       this.logger.log(prefix, ...logs());
-      this.checkLink(link, { nth, time: true });
     } catch (error) {
       prefix.error = true;
       this.logger.error(

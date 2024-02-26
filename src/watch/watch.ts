@@ -13,6 +13,9 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
       if (item.type === 'init') {
         await runner.reinit(item.link, nth);
         return;
+      } else if (item.type === 'check') {
+        runner.checkLink(item.link, { nth, time: true });
+        return;
       }
       const file = item.link.src.getFile(item.filePath);
       if (!file) {
@@ -50,6 +53,8 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
       return filtered;
     },
     handle: item => {
+      // reinitialize only once for package.json changes
+      const didInit: { [path: string]: boolean } = {};
       const isRemove = item.event === 'unlink' || item.event === 'unlinkDir';
       for (const link of manager.links) {
         const file = link.src.getFile(item.path);
@@ -59,10 +64,14 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
           runnerQueue.enqueue({ type: 'remove', link, filePath: item.path });
           continue;
         }
-        runnerQueue.enqueue({ type: 'copy', link, filePath: item.path });
-        // reinitialize package for package.json changes
-        if (file.filePath === 'package.json') {
+        const isPackageJson = file.filePath === 'package.json';
+        if (isPackageJson && !didInit[link.src.path]) {
+          didInit[link.src.path] = true;
           runnerQueue.enqueue({ type: 'init', link });
+        }
+        runnerQueue.enqueue({ type: 'copy', link, filePath: item.path });
+        if (isPackageJson) {
+          runnerQueue.enqueue({ type: 'check', link });
         }
       }
     }

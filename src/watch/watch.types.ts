@@ -10,6 +10,10 @@ interface InitAction extends BaseAction {
   type: 'init';
 }
 
+interface CheckAction extends BaseAction {
+  type: 'check';
+}
+
 interface CopyAction extends BaseAction {
   type: 'copy';
   filePath: string;
@@ -20,7 +24,7 @@ interface RemoveAction extends BaseAction {
   filePath: string;
 }
 
-export type Action = InitAction | CopyAction | RemoveAction;
+export type Action = InitAction | CheckAction | CopyAction | RemoveAction;
 
 export interface WatcherPayload {
   event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
