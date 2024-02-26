@@ -16,18 +16,18 @@ interface ProgramOptions {
 function createProgram() {
   return new Command()
     .name(name)
-    .description(description)
-    .usage('[paths...] [options]')
+    .addHelpText('before', description + '\n')
     .argument(
-      '[paths...]',
+      '<paths...>',
       'paths of source packages to link.\n' +
         'Separate with a colon to link specific source and destination packages:\n\n' +
         'lnpkg <src1> : <dest1> <src2> <src3> : <dest3> ...'
     )
     .option('-n, --dry-run', 'log only without performing operations (noop)')
-    .option(
-      '-t, --to <paths...>',
-      'the destination package(s) to link source packages to'
+    .option<string[]>(
+      '-t, --to <path>',
+      'the destination package(s) to link source packages to',
+      (value, previous = []) => (previous.push(value), previous)
     )
     .option(
       '-C, --cwd <path>',
@@ -57,12 +57,12 @@ function createProgram() {
 export async function cli(): Promise<void> {
   // if no args, show help
   const program = createProgram();
-  if (process.argv.length <= 2) {
+  if (process.argv.length < 3) {
     program.help();
   }
   program.parse();
   try {
-    const paths = parsePaths(program.args);
+    const paths = parsePaths(program.processedArgs[0]);
     if (paths.length === 0) {
       throw new Error("No 'paths' provided.");
     }
