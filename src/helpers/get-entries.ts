@@ -40,11 +40,10 @@ export async function getEntries(options: GetEntriesOptions): Promise<Entry[]> {
 }
 
 async function expand(value: string | string[] | undefined, cwd: string) {
-  const values = Array.isArray(value)
-    ? value
-    : typeof value === 'string'
-    ? [value]
-    : [];
+  const values =
+    typeof value === 'string' ? [value] : Array.isArray(value) ? value : [];
   const paths = await glob(values, { cwd, dot: true, nocase: true });
-  return paths.sort();
+  // if no paths, fallback to just using values
+  const result = paths.length === 0 ? values.slice() : paths;
+  return result.sort();
 }
