@@ -29,7 +29,9 @@ export async function parseOptions(command: Command): Promise<LnPkgOptions> {
   const inputs = options.link || [];
   for (const input of inputs) {
     if (input.dest.length === 0) {
-      command.error("error: missing '-t, --to' after '-l, --link'");
+      command.error(
+        "error: missing option '-t, --to <paths...>' after option '-l, --link'"
+      );
     }
   }
 

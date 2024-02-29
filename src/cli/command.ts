@@ -53,7 +53,9 @@ export function createCommand(): Command {
       "destination packages for preceding '--link' source packages",
       value => {
         if (input.src.length === 0) {
-          command.error("error: missing '-l, --link' before '-t, --to'");
+          command.error(
+            "error: missing option '-l, --link <paths...>' before option '-t, --to'"
+          );
         }
         saved = true;
         input.dest.push(value);
