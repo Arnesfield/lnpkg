@@ -9,11 +9,15 @@ import { Time } from '../utils/time';
 import { watch } from '../watch/watch';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
+  const entries = await getEntries(options);
+  if (entries.length === 0) {
+    throw new Error('No entries found.');
+  }
+
   const logger = new Logger();
   const manager = new Manager();
   const runner = new Runner(logger, options);
   const time = new Time();
-  const entries = getEntries(options);
   const { watchOnly } = options;
 
   const message = () => chalk.yellow(time.diff('entry'));
@@ -51,6 +55,8 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
 
   if (options.watch || watchOnly) {
     watch(manager, runner);
-    logger.log({ app: true }, 'Watching for package file changes.');
+    if (manager.links.length > 0) {
+      logger.log({ app: true }, 'Watching for package file changes.');
+    }
   }
 }

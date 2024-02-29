@@ -1,4 +1,4 @@
-import { FSWatcher, watch as chokidarWatch } from 'chokidar';
+import { watch as chokidarWatch } from 'chokidar';
 import { PrefixOptions } from '../helpers/logger';
 import { Manager } from '../link/manager';
 import { Runner } from '../runner/runner';
@@ -6,7 +6,7 @@ import { Queue } from '../utils/queue';
 import { simplifyPaths } from '../utils/simplify-paths';
 import { Action, WatcherPayload } from './watch.types';
 
-export function watch(manager: Manager, runner: Runner): FSWatcher {
+export function watch(manager: Manager, runner: Runner): void {
   const runnerQueue = new Queue<Action>({
     async handle(item, index, total) {
       const nth: PrefixOptions['nth'] = { index, total };
@@ -77,9 +77,8 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
     }
   });
 
-  const watcher = chokidarWatch(
+  chokidarWatch(
     manager.links.map(link => link.src.path),
     { ignoreInitial: true }
   ).on('all', (event, path) => watcherQueue.enqueue({ event, path }));
-  return watcher;
 }

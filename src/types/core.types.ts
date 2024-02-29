@@ -1,11 +1,11 @@
-export interface Entry {
-  src: string;
-  dest: string;
+export interface Input {
+  src: string | string[];
+  dest?: string | string[];
 }
 
 export interface LnPkgOptions {
-  paths: (string | Entry)[];
-  to?: string | string[];
+  input: string | Input | (string | Input)[];
+  dest?: string | string[];
   cwd?: string;
   dryRun?: boolean;
   force?: boolean;

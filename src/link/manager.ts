@@ -1,6 +1,10 @@
 import { Package } from '../package/package';
-import { Entry } from '../types/core.types';
 import { Link } from './link';
+
+export interface Entry {
+  src: string;
+  dest: string;
+}
 
 export class Manager {
   readonly links: Link[] = [];
