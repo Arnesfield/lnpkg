@@ -18,11 +18,28 @@ export interface ProgramOptions {
   watchOnly?: boolean;
 }
 
+// NOTE: taken from https://github.com/tj/commander.js/issues/1343#issuecomment-699546401
+class LnPkgCommand extends Command {
+  createCommand(name?: string) {
+    return new LnPkgCommand(name);
+  }
+  addOption(option: Option) {
+    const result = super.addOption(option);
+    // add a hidden `--no` option for boolean options
+    if (option.long && !option.required && !option.negate && !option.optional) {
+      super.addOption(
+        new Option(option.long.replace(/^--/, '--no-')).hideHelp()
+      );
+    }
+    return result;
+  }
+}
+
 export function createCommand(): Command {
   // NOTE: '--link' option may break if commander changes how it parses options
   let input: ProgramInput = { src: [], dest: [] };
   let saved = false;
-  const command = new Command();
+  const command = new LnPkgCommand();
   return command
     .name(name)
     .addHelpText('before', description + '\n')
@@ -79,9 +96,11 @@ export function createCommand(): Command {
       '-s, --skip',
       'skip link if source package is not a dependency of destination package'
     )
-    .option(
-      '-w, --watch',
-      'watch package files for changes after linking packages'
+    .addOption(
+      new Option(
+        '-w, --watch',
+        'watch package files for changes after linking packages'
+      ).conflicts('watchOnly')
     )
     .option(
       '-W, --watch-only',
