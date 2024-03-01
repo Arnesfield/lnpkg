@@ -17,7 +17,7 @@ export function watch(manager: Manager, runner: Runner): void {
         runner.checkLink(item.link, { nth, time: true });
         return;
       }
-      const file = item.link.src.getFile(item.filePath);
+      const file = await item.link.src.getFile(item.filePath);
       if (!file) {
         return;
       }
@@ -52,12 +52,12 @@ export function watch(manager: Manager, runner: Runner): void {
       }
       return filtered;
     },
-    handle: item => {
+    handle: async item => {
       // reinitialize only once for package.json changes
       const didInit: { [path: string]: boolean } = {};
       const isRemove = item.event === 'unlink' || item.event === 'unlinkDir';
       for (const link of manager.links) {
-        const file = link.src.getFile(item.path);
+        const file = await link.src.getFile(item.path);
         if (!file) {
           continue;
         } else if (isRemove) {

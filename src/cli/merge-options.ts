@@ -1,4 +1,4 @@
-import { LnPkgOptions } from '../types/core.types';
+import { LnPkgOptions } from '../core/lnpkg.types';
 import { ensureArray } from '../utils/ensure-array';
 
 export function mergeOptions(

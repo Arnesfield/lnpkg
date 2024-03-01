@@ -1,7 +1,7 @@
 import { glob } from 'glob';
 import path from 'path';
+import { LnPkgOptions } from '../core/lnpkg.types';
 import { Entry } from '../link/manager';
-import { LnPkgOptions } from '../types/core.types';
 import { cwd } from '../utils/cwd';
 import { ensureArray } from '../utils/ensure-array';
 

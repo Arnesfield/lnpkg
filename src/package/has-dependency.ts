@@ -1,4 +1,4 @@
-import { PackageJson } from '../types/package.types';
+import { PackageJson } from '@npmcli/package-json';
 
 export function hasDependency(json: PackageJson, name: string): boolean {
   return !!(

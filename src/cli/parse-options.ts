@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { LnPkgOptions } from '../types/core.types';
+import { LnPkgOptions } from '../core/lnpkg.types';
 import { cwd } from '../utils/cwd';
 import { ProgramOptions } from './command';
 import { mergeOptions } from './merge-options';

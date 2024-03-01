@@ -1,9 +1,9 @@
 import chalk from 'chalk';
 import path from 'path';
+import { LnPkgOptions } from '../core/lnpkg.types';
 import { Logger, PrefixOptions } from '../helpers/logger';
 import { Link } from '../link/link';
-import { LnPkgOptions } from '../types/core.types';
-import { PackageFile } from '../types/package.types';
+import { PackageFile } from '../package/package.types';
 import { cwd } from '../utils/cwd';
 import { cp, rm } from '../utils/fs.utils';
 import { Timer } from '../utils/timer';

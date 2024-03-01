@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { LnPkgOptions } from '../types/core.types';
+import { LnPkgOptions } from '../core/lnpkg.types';
 import { ensureArray } from '../utils/ensure-array';
 import { getStdin } from '../utils/stdin';
 

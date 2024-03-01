@@ -1,12 +1,12 @@
+import Arborist, { Node } from '@npmcli/arborist';
+import { PackageJson } from '@npmcli/package-json';
+import packlist from 'npm-packlist';
 import path from 'path';
-import { PackageFile, PackageJson } from '../types/package.types';
-import { isPathDescendant, simplifyPaths } from '../utils/simplify-paths';
-import { readPackage } from './read-package';
-import { resolvePackageFiles } from './resolve-package-files';
+import { PackageFile } from './package.types';
 import { validatePackagePath } from './validate-package-path';
 
 export class Package {
-  private _json: PackageJson | undefined;
+  private _node: Node | undefined;
   private _files: PackageFile[] | undefined;
   private fileLookup: { [path: string]: PackageFile | undefined } = {};
 
@@ -21,10 +21,14 @@ export class Package {
    * The source `package.json`.
    */
   get json(): PackageJson {
-    if (!this._json) {
+    return this.node.package;
+  }
+
+  private get node() {
+    if (!this._node) {
       throw new Error(`Package not initialized: ${this.path}`);
     }
-    return this._json;
+    return this._node;
   }
 
   /**
@@ -32,27 +36,29 @@ export class Package {
    */
   get files(): PackageFile[] {
     if (!this._files) {
-      const name = this._json ? this._json.name + ' ' : '';
+      const pkgName = this._node?.package.name || '';
+      const name = pkgName && pkgName + ' ';
       throw new Error('Package files not loaded: ' + name + this.path);
     }
     return this._files;
   }
 
-  async init(): Promise<PackageJson> {
-    const pkgJsonPath = await validatePackagePath(this.path);
-    this._json = await readPackage(pkgJsonPath);
+  async init(): Promise<void> {
+    await validatePackagePath(this.path);
+    const arborist = new Arborist({ path: this.path });
+    this._node = await arborist.loadActual();
     // also load files if they were available when refreshing
     if (this._files) {
       await this.loadFiles(true);
     }
-    return this._json;
   }
 
-  async loadFiles(refresh = false): Promise<PackageFile[]> {
+  async loadFiles(refresh = false): Promise<void> {
     if (refresh || !this._files) {
-      const filePaths = await resolvePackageFiles(this.path, this.json);
+      // no need to update node when refreshing
+      const files = await packlist(this.node);
       this.fileLookup = {};
-      this._files = filePaths.map(filePath => {
+      this._files = files.map(filePath => {
         const file: PackageFile = {
           filePath,
           path: path.resolve(this.path, filePath)
@@ -61,33 +67,19 @@ export class Package {
         return file;
       });
     }
-    return this._files;
   }
 
-  getFile(filePath: string): PackageFile | undefined {
+  async getFile(filePath: string): Promise<PackageFile | undefined> {
     // check if part of src path
     filePath = path.isAbsolute(filePath)
       ? filePath
       : path.resolve(this.path, filePath);
-    const matchedFile =
-      this.fileLookup[filePath] ||
-      this.files.find(file => file.path === filePath);
-    if (!matchedFile) {
-      // if no matched files, check if filePath is in package files
-      const isInPackage =
-        isPathDescendant(this.path, filePath) &&
-        simplifyPaths(this.files.map(file => file.path).concat(filePath)).map[
-          filePath
-        ];
-      if (!isInPackage) {
-        return;
-      }
+    let file = this.fileLookup[filePath];
+    if (!file) {
+      // if no match, reload package files. seems fast enough ¯\_(ツ)_/¯
+      await this.loadFiles(true);
+      file = this.fileLookup[filePath];
     }
-    // add to fileLookup when valid
-    const file = (this.fileLookup[filePath] = matchedFile || {
-      path: filePath,
-      filePath: path.relative(this.path, filePath)
-    });
     return file;
   }
 }

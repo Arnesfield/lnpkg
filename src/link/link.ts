@@ -9,13 +9,13 @@ export class Link {
     return path.resolve(
       this.dest.path,
       'node_modules',
-      this.src.json.name,
+      this.src.json.name || '',
       ...paths
     );
   }
 
   // check if src a dependency of dest
   isDependency(): boolean {
-    return hasDependency(this.dest.json, this.src.json.name);
+    return hasDependency(this.dest.json, this.src.json.name || '');
   }
 }

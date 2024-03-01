@@ -1,5 +1,4 @@
 import path from 'path';
-import { PACKAGE_JSON } from '../constants/package.constants';
 import { lstat } from '../utils/fs.utils';
 
 /**
@@ -12,7 +11,7 @@ export async function validatePackagePath(pkgPath: string): Promise<string> {
   if (!stats.isDirectory()) {
     throw new Error(`Not a directory: ${pkgPath}`);
   }
-  const pkgJsonPath = path.resolve(pkgPath, PACKAGE_JSON);
+  const pkgJsonPath = path.resolve(pkgPath, 'package.json');
   stats = await lstat(pkgJsonPath);
   if (!stats.isFile()) {
     throw new Error(`Not a file: ${pkgJsonPath}`);

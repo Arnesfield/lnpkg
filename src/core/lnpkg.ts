@@ -4,9 +4,9 @@ import { Logger } from '../helpers/logger';
 import { Link } from '../link/link';
 import { Manager } from '../link/manager';
 import { Runner } from '../runner/runner';
-import { LnPkgOptions } from '../types/core.types';
 import { Timer } from '../utils/timer';
 import { watch } from '../watch/watch';
+import { LnPkgOptions } from './lnpkg.types';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
   const entries = await getEntries(options);
