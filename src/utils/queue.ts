@@ -10,12 +10,12 @@ export class Queue<T> {
 
   constructor(protected readonly options: QueueOptions<T>) {}
 
-  enqueue(item: T): void {
+  enqueue(...items: T[]): void {
     const exists = !!this.collection;
     if (!this.collection) {
       this.collection = [];
     }
-    this.collection.push(item);
+    this.collection.push(...items);
     if (exists) {
       return;
     }

@@ -45,6 +45,7 @@ export class Package {
 
   async init(): Promise<void> {
     await validatePackagePath(this.path);
+    // need to create new Arborist instance every init
     const arborist = new Arborist({ path: this.path });
     this._node = await arborist.loadActual();
     // also load files if they were available when refreshing

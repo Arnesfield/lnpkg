@@ -1,4 +1,5 @@
 import { Link } from '../link/link';
+import { PackageFile } from '../package/package.types';
 
 // NOTE: internal
 
@@ -10,21 +11,31 @@ interface InitAction extends BaseAction {
   type: 'init';
 }
 
-interface CheckAction extends BaseAction {
-  type: 'check';
-}
-
 interface CopyAction extends BaseAction {
   type: 'copy';
-  filePath: string;
+  file: PackageFile;
 }
 
 interface RemoveAction extends BaseAction {
   type: 'remove';
-  filePath: string;
+  file: PackageFile;
 }
 
-export type Action = InitAction | CheckAction | CopyAction | RemoveAction;
+interface LinkAction extends BaseAction {
+  type: 'link';
+}
+
+interface UnlinkAction extends BaseAction {
+  type: 'unlink';
+  files: PackageFile[];
+}
+
+export type Action =
+  | InitAction
+  | CopyAction
+  | RemoveAction
+  | LinkAction
+  | UnlinkAction;
 
 export interface WatcherPayload {
   event: 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';

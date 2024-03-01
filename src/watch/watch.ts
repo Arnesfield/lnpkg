@@ -10,23 +10,29 @@ export function watch(manager: Manager, runner: Runner): void {
   const runnerQueue = new Queue<Action>({
     async handle(item, index, total) {
       const nth: PrefixOptions['nth'] = { index, total };
-      if (item.type === 'init') {
-        await runner.reinit(item.link, nth);
-        return;
-      } else if (item.type === 'check') {
-        runner.checkLink(item.link, { nth, time: true });
-        return;
+      const { link } = item;
+      switch (item.type) {
+        case 'init':
+          await runner.reinit(link, nth);
+          break;
+        case 'link':
+          if (runner.checkLink(link, { nth, time: true })) {
+            await runner.link(link);
+          }
+          break;
+        case 'unlink':
+          await Promise.all(
+            item.files.map(file => runner.run('remove', { link, file }))
+          );
+          break;
+        default:
+          await runner.run(item.type, {
+            nth,
+            link,
+            file: item.file,
+            watchMode: true
+          });
       }
-      const file = await item.link.src.getFile(item.filePath);
-      if (!file) {
-        return;
-      }
-      await runner.run(item.type, {
-        nth,
-        file,
-        link: item.link,
-        watchMode: true
-      });
     }
   });
 
@@ -53,25 +59,24 @@ export function watch(manager: Manager, runner: Runner): void {
       return filtered;
     },
     handle: async item => {
-      // reinitialize only once for package.json changes
-      const didInit: { [path: string]: boolean } = {};
       const isRemove = item.event === 'unlink' || item.event === 'unlinkDir';
       for (const link of manager.links) {
         const file = await link.src.getFile(item.path);
         if (!file) {
           continue;
         } else if (isRemove) {
-          runnerQueue.enqueue({ type: 'remove', link, filePath: item.path });
+          runnerQueue.enqueue({ type: 'remove', link, file });
           continue;
         }
         const isPackageJson = file.filePath === 'package.json';
-        if (isPackageJson && !didInit[link.src.path]) {
-          didInit[link.src.path] = true;
-          runnerQueue.enqueue({ type: 'init', link });
-        }
-        runnerQueue.enqueue({ type: 'copy', link, filePath: item.path });
         if (isPackageJson) {
-          runnerQueue.enqueue({ type: 'check', link });
+          runnerQueue.enqueue(
+            { type: 'unlink', link, files: link.src.files },
+            { type: 'init', link },
+            { type: 'link', link }
+          );
+        } else {
+          runnerQueue.enqueue({ type: 'copy', link, file });
         }
       }
     }
