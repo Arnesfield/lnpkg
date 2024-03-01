@@ -1,6 +1,6 @@
 import prettyMilliseconds from 'pretty-ms';
 
-export class Time {
+export class Timer {
   private readonly timeMap: { [key: string]: number } = {};
 
   start(key: string): number {

@@ -6,7 +6,7 @@ import { LnPkgOptions } from '../types/core.types';
 import { PackageFile } from '../types/package.types';
 import { cwd } from '../utils/cwd';
 import { cp, rm } from '../utils/fs.utils';
-import { Time } from '../utils/time';
+import { Timer } from '../utils/timer';
 
 export interface RunnerOptions
   extends Pick<LnPkgOptions, 'cwd' | 'dryRun' | 'force' | 'skip'> {}
@@ -94,15 +94,15 @@ export class Runner {
       return;
     }
     const destFilePath = link.getDestPath(file.filePath);
-    const time = new Time();
+    const timer = new Timer();
     const prefix: PrefixOptions = { link, nth, time: watchMode };
     const logs = () => [
       chalk.bgBlack.bold[type === 'copy' ? 'blue' : 'magenta'](type),
       file.filePath,
-      chalk.yellow(time.diff('file'))
+      chalk.yellow(timer.diff('file'))
     ];
 
-    time.start('file');
+    timer.start('file');
     try {
       let log = true;
       if (dryRun) {
@@ -132,7 +132,7 @@ export class Runner {
     if (!file) {
       return;
     }
-    const time = new Time();
+    const timer = new Timer();
     const prefix: PrefixOptions = {
       pkg,
       nth,
@@ -143,10 +143,10 @@ export class Runner {
       chalk.bgBlack.bold.green('init'),
       'Reinitialize package:',
       chalk.dim(path.relative(this.cwd, pkg.path) || '.'),
-      chalk.yellow(time.diff('init'))
+      chalk.yellow(timer.diff('init'))
     ];
 
-    time.start('init');
+    timer.start('init');
     try {
       await pkg.init();
       this.logger.log(prefix, ...logs());

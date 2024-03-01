@@ -5,7 +5,7 @@ import { Link } from '../link/link';
 import { Manager } from '../link/manager';
 import { Runner } from '../runner/runner';
 import { LnPkgOptions } from '../types/core.types';
-import { Time } from '../utils/time';
+import { Timer } from '../utils/timer';
 import { watch } from '../watch/watch';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
@@ -17,18 +17,18 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
   const logger = new Logger();
   const manager = new Manager();
   const runner = new Runner(logger, options);
-  const time = new Time();
+  const timer = new Timer();
   const { watchOnly } = options;
 
-  const message = () => chalk.yellow(time.diff('entry'));
-  time.start('main');
+  const message = () => chalk.yellow(timer.diff('entry'));
+  timer.start('main');
   for (const entry of entries) {
     // skip if existing link
     if (manager.get(entry)) {
       continue;
     }
     let link: Link;
-    time.start('entry');
+    timer.start('entry');
     try {
       link = await manager.create(entry);
     } catch (error) {
@@ -50,7 +50,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     count.packages,
     count.links,
     count.links === 1 ? 'link' : 'links',
-    chalk.yellow(time.diff('main'))
+    chalk.yellow(timer.diff('main'))
   );
 
   if (options.watch || watchOnly) {
