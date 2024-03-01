@@ -7,8 +7,9 @@ export interface ProgramInput {
 }
 
 export interface ProgramOptions {
-  dest: string[] | undefined;
-  link: ProgramInput[] | undefined;
+  dest?: string[];
+  dests?: string[];
+  link?: ProgramInput[];
   cwd?: string;
   config?: string[];
   configs?: string[];
@@ -19,26 +20,43 @@ export interface ProgramOptions {
   watchOnly?: boolean;
 }
 
+// keep array reference
+function createArrayParser(defaultValue: string[] = []) {
+  return (value: string, previous = defaultValue) => (
+    previous.push(value), previous
+  );
+}
+
 export function createCommand(): Command {
   // NOTE: '--link' option may break if commander changes how it parses options
   let input: ProgramInput = { src: [], dest: [] };
   let saved = false;
-  // keep configs reference
-  const configs: string[] = [];
-  function parseConfig(value: string, previous = configs) {
-    previous.push(value);
-    return previous;
-  }
+
+  const parseDest = createArrayParser();
+  const destsOption = new Option(
+    '    --dests <...>',
+    "similar to '--dest' but accepts multiple paths"
+  ).argParser(parseDest);
+  destsOption.variadic = true;
+
+  const parseConfig = createArrayParser();
+  const configsOption = new Option(
+    '    --configs <...>',
+    "similar to '--config' but accepts multiple file paths"
+  ).argParser(parseConfig);
+  configsOption.variadic = true;
+
   const command = new Command()
     .name(name)
     .addHelpText('before', description + '\n')
     .argument('[paths...]', 'paths of source packages to link')
     .option('-n, --dry-run', 'log only without performing operations (noop)')
-    .option<string[]>(
+    .option(
       '-d, --dest <path>',
       'default destination package(s) to link source packages to',
-      (value, previous = []) => (previous.push(value), previous)
+      parseDest
     )
+    .addOption(destsOption)
     .option<ProgramInput[]>(
       '-l, --link <paths...>',
       "source packages to link to proceeding '--to' destination packages",
@@ -71,16 +89,12 @@ export function createCommand(): Command {
       '-C, --cwd <path>',
       'run command as if it was started in <path> instead of the current working directory'
     )
-    .option<string[]>(
+    .option(
       '-c, --config <path>',
       "file path to config(s) or '-' for stdin (json format)",
       parseConfig
     )
-    .option<string[]>(
-      '--configs <path...>',
-      "file path to config(s) or '-' for stdin (json format)",
-      parseConfig
-    )
+    .addOption(configsOption)
     .addOption(
       new Option(
         '-f, --force',
