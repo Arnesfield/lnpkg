@@ -3,6 +3,7 @@ import path from 'path';
 import { Entry } from '../link/manager';
 import { LnPkgOptions } from '../types/core.types';
 import { cwd } from '../utils/cwd';
+import { ensureArray } from '../utils/ensure-array';
 
 export interface GetEntriesOptions
   extends Pick<LnPkgOptions, 'cwd' | 'dest' | 'input'> {}
@@ -12,7 +13,7 @@ export interface GetEntriesOptions
 export async function getEntries(options: GetEntriesOptions): Promise<Entry[]> {
   const entries: Entry[] = [];
   const dir = cwd(options.cwd);
-  const inputs = Array.isArray(options.input) ? options.input : [options.input];
+  const inputs = ensureArray(options.input);
   const dests = await expand(options.dest, dir);
   // NOTE: duplicates not filtered out
   for (const defaultDest of dests) {
@@ -22,8 +23,7 @@ export async function getEntries(options: GetEntriesOptions): Promise<Entry[]> {
       const srcs = await expand(isObject ? input.src : input, dir);
       // fallback to default dests if no dest provided
       const dests =
-        isObject &&
-        (typeof input.dest === 'string' || Array.isArray(input.dest))
+        isObject && input.dest != null
           ? await expand(input.dest, dir)
           : defaultDests;
       for (const dest of dests) {
@@ -40,8 +40,7 @@ export async function getEntries(options: GetEntriesOptions): Promise<Entry[]> {
 }
 
 async function expand(value: string | string[] | undefined, cwd: string) {
-  const values =
-    typeof value === 'string' ? [value] : Array.isArray(value) ? value : [];
+  const values = ensureArray(value);
   const paths = await glob(values, { cwd, dot: true, nocase: true });
   // if no paths, fallback to just using values
   const result = paths.length === 0 ? values.slice() : paths;

@@ -10,7 +10,8 @@ export interface ProgramOptions {
   dest: string[] | undefined;
   link: ProgramInput[] | undefined;
   cwd?: string;
-  config?: string;
+  config?: string[];
+  configs?: string[];
   dryRun?: boolean;
   force?: boolean;
   skip?: boolean;
@@ -18,29 +19,17 @@ export interface ProgramOptions {
   watchOnly?: boolean;
 }
 
-// NOTE: taken from https://github.com/tj/commander.js/issues/1343#issuecomment-699546401
-class LnPkgCommand extends Command {
-  createCommand(name?: string) {
-    return new LnPkgCommand(name);
-  }
-  addOption(option: Option) {
-    const result = super.addOption(option);
-    // add a hidden `--no` option for boolean options
-    if (option.long && !option.required && !option.negate && !option.optional) {
-      super.addOption(
-        new Option(option.long.replace(/^--/, '--no-')).hideHelp()
-      );
-    }
-    return result;
-  }
-}
-
 export function createCommand(): Command {
   // NOTE: '--link' option may break if commander changes how it parses options
   let input: ProgramInput = { src: [], dest: [] };
   let saved = false;
-  const command = new LnPkgCommand();
-  return command
+  // keep configs reference
+  const configs: string[] = [];
+  function parseConfig(value: string, previous = configs) {
+    previous.push(value);
+    return previous;
+  }
+  const command = new Command()
     .name(name)
     .addHelpText('before', description + '\n')
     .argument('[paths...]', 'paths of source packages to link')
@@ -65,7 +54,7 @@ export function createCommand(): Command {
         return previous;
       }
     )
-    .option<undefined>(
+    .option(
       '-t, --to <paths...>',
       "destination packages for preceding '--link' source packages",
       value => {
@@ -82,9 +71,15 @@ export function createCommand(): Command {
       '-C, --cwd <path>',
       'run command as if it was started in <path> instead of the current working directory'
     )
-    .option(
+    .option<string[]>(
       '-c, --config <path>',
-      "file path to config or '-' for stdin (json format)"
+      "file path to config(s) or '-' for stdin (json format)",
+      parseConfig
+    )
+    .option<string[]>(
+      '--configs <path...>',
+      "file path to config(s) or '-' for stdin (json format)",
+      parseConfig
     )
     .addOption(
       new Option(
@@ -107,4 +102,15 @@ export function createCommand(): Command {
       'skip linking packages and watch package files for changes only'
     )
     .version(`v${version}`, '-v, --version');
+  // add hidden `--no` option for boolean options
+  // NOTE: taken from https://github.com/tj/commander.js/issues/1343#issuecomment-699546401
+  const match = /^--/;
+  for (const option of command.options) {
+    if (option.long && !option.required && !option.negate && !option.optional) {
+      command.addOption(
+        new Option(option.long.replace(match, '--no-')).hideHelp()
+      );
+    }
+  }
+  return command;
 }

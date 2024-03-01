@@ -1,0 +1,38 @@
+import { Command } from 'commander';
+import { LnPkgOptions } from '../types/core.types';
+import { cwd } from '../utils/cwd';
+import { ProgramOptions } from './command';
+import { mergeOptions } from './merge-options';
+import { resolveConfigs } from './resolve-config';
+import { scopeOptions } from './scope-options';
+
+export async function parseOptions(command: Command): Promise<LnPkgOptions> {
+  const {
+    config: _config,
+    configs: _configs,
+    link = [],
+    ...opts
+  } = command.opts<ProgramOptions>();
+  // make sure inputs have sources
+  for (const input of link) {
+    if (input.dest.length === 0) {
+      command.error(
+        "error: missing option '-t, --to <paths...>' after option '-l, --link'"
+      );
+    }
+  }
+  // properly resolve and scope options
+  // parse json config, use provided cwd to resolve config path
+  const config = _config || _configs;
+  const configs = Array.isArray(config) ? Array.from(new Set(config)) : [];
+  const resolvedOptions = await resolveConfigs(cwd(opts.cwd), configs);
+  const scopedOptions = scopeOptions(resolvedOptions);
+  // merge options, prioritize cli options
+  const input = command.processedArgs[0].concat(link);
+  const options = mergeOptions({ ...opts, input }, ...scopedOptions);
+  // default to current directory
+  if (!options.dest || options.dest.length === 0) {
+    options.dest = ['.'];
+  }
+  return options;
+}
