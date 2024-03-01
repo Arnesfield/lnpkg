@@ -1,6 +1,6 @@
-import { lnpkg } from '../core/lnpkg';
-import { createCommand } from './command';
-import { parseOptions } from './parse-options';
+import { createCommand } from './cli/command';
+import { parseOptions } from './cli/parse-options';
+import { lnpkg } from './core/lnpkg';
 
 export async function cli(): Promise<void> {
   // if no args, show help
