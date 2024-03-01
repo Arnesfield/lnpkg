@@ -22,14 +22,13 @@ function defineConfig(options: (false | RollupOptions)[]) {
 
 export default defineConfig([
   {
-    input: 'src/cli.ts',
+    input: { index: input, cli: 'src/cli.ts' },
     output: {
       dir: 'lib',
       format: 'esm',
       exports: 'named',
       sourcemap: PROD,
-      chunkFileNames: '[name].js',
-      manualChunks: { index: [input] }
+      chunkFileNames: '[name].js'
     },
     plugins: [esbuild(), json(), externals(), outputSize()]
   },
