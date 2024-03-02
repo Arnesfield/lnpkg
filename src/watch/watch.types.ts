@@ -1,4 +1,4 @@
-import { Link } from '../link/link';
+import { Link } from '../core/link';
 import { PackageFile } from '../package/package.types';
 
 // NOTE: internal

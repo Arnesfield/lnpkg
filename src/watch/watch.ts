@@ -1,8 +1,8 @@
 import { watch as chokidarWatch } from 'chokidar';
+import { Manager } from '../core/manager';
+import { Runner } from '../core/runner';
 import { PrefixOptions } from '../helpers/logger';
-import { Manager } from '../link/manager';
 import { PackageFile } from '../package/package.types';
-import { Runner } from '../runner/runner';
 import { Queue } from '../utils/queue';
 import { simplifyPaths } from '../utils/simplify-paths';
 import { Action, WatcherPayload } from './watch.types';

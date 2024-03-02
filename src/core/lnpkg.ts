@@ -1,12 +1,12 @@
 import chalk from 'chalk';
 import { getEntries } from '../helpers/get-entries';
 import { Logger } from '../helpers/logger';
-import { Link } from '../link/link';
-import { Manager } from '../link/manager';
-import { Runner } from '../runner/runner';
 import { Timer } from '../utils/timer';
 import { watch } from '../watch/watch';
+import { Link } from './link';
 import { LnPkgOptions } from './lnpkg.types';
+import { Manager } from './manager';
+import { Runner } from './runner';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
   const entries = await getEntries(options);

@@ -1,7 +1,7 @@
 import chalk from 'chalk';
 import path from 'path';
 import { name } from '../../package.json';
-import { Link } from '../link/link';
+import { Link } from '../core/link';
 import { Package } from '../package/package';
 import { colors } from '../utils/colors';
 import { formatTime } from '../utils/format-time';

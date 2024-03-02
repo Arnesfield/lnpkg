@@ -1,12 +1,12 @@
 import chalk from 'chalk';
 import path from 'path';
-import { LnPkgOptions } from '../core/lnpkg.types';
 import { Logger, PrefixOptions } from '../helpers/logger';
-import { Link } from '../link/link';
 import { PackageFile } from '../package/package.types';
 import { cwd } from '../utils/cwd';
 import { cp, rm } from '../utils/fs.utils';
 import { Timer } from '../utils/timer';
+import { Link } from './link';
+import { LnPkgOptions } from './lnpkg.types';
 
 export interface RunnerOptions
   extends Pick<LnPkgOptions, 'cwd' | 'dryRun' | 'force' | 'skip'> {}
