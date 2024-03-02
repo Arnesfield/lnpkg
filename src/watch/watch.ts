@@ -1,6 +1,7 @@
 import { watch as chokidarWatch } from 'chokidar';
 import { PrefixOptions } from '../helpers/logger';
 import { Manager } from '../link/manager';
+import { PackageFile } from '../package/package.types';
 import { Runner } from '../runner/runner';
 import { Queue } from '../utils/queue';
 import { simplifyPaths } from '../utils/simplify-paths';
@@ -59,6 +60,8 @@ export function watch(manager: Manager, runner: Runner): void {
       return filtered;
     },
     handle: async item => {
+      // reinitialize only once for package.json changes
+      const didInit: { [path: string]: PackageFile[] | undefined } = {};
       const isRemove = item.event === 'unlink' || item.event === 'unlinkDir';
       for (const link of manager.links) {
         const file = await link.src.getFile(item.path);
@@ -67,17 +70,20 @@ export function watch(manager: Manager, runner: Runner): void {
         } else if (isRemove) {
           runnerQueue.enqueue({ type: 'remove', link, file });
           continue;
-        }
-        const isPackageJson = file.filePath === 'package.json';
-        if (isPackageJson) {
-          runnerQueue.enqueue(
-            { type: 'unlink', link, files: link.src.files },
-            { type: 'init', link },
-            { type: 'link', link }
-          );
-        } else {
+        } else if (file.filePath !== 'package.json') {
           runnerQueue.enqueue({ type: 'copy', link, file });
+          continue;
         }
+        // for package.json, unlink existing files and reinit
+        // assume that package files array is not mutated
+        const shouldInit = !didInit[link.src.path];
+        const files = (didInit[link.src.path] ||= link.src.files);
+        // TODO: probably create a smart unlink, unlink only files not in reloaded files?
+        runnerQueue.enqueue({ type: 'unlink', link, files });
+        if (shouldInit) {
+          runnerQueue.enqueue({ type: 'init', link });
+        }
+        runnerQueue.enqueue({ type: 'link', link });
       }
     }
   });

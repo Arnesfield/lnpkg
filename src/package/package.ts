@@ -45,7 +45,10 @@ export class Package {
   private async loadNode() {
     // need to create new Arborist instance every init
     const arborist = new Arborist({ path: this.path });
-    return (this.node = await arborist.loadActual());
+    this.node = await arborist.loadActual();
+    // take this opportunity to remove unused json
+    this._json = undefined;
+    return this.node;
   }
 
   /**
