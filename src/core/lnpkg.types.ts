@@ -3,11 +3,11 @@
  */
 export interface Input {
   /**
-   * Source package path(s).
+   * Source package path(s) or glob pattern(s).
    */
   src: string | string[];
   /**
-   * Destination package path(s).
+   * Destination package path(s) or glob pattern(s).
    *
    * Defaults to {@linkcode LnPkgOptions.dest} if not provided.
    */
@@ -19,12 +19,15 @@ export interface Input {
  */
 export interface LnPkgOptions {
   /**
-   * Source package path(s) or {@linkcode Input Input(s)}
-   * to link to destination package path(s).
+   * Source package(s) or {@linkcode Input Input(s)} to link to destination package(s).
+   *
+   * Can be paths or glob patterns.
    */
   input: string | Input | (string | Input)[];
   /**
-   * Default destination package paths(s) to link source package path(s) to.
+   * Default destination package(s) to link source package(s) to.
+   *
+   * Can be paths or glob patterns.
    */
   dest?: string | string[];
   /**
