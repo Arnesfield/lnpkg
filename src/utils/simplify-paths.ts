@@ -4,6 +4,13 @@ function addSep(value: string) {
   return value + (value.endsWith(path.sep) ? '' : path.sep);
 }
 
+export function isPathDescendant(
+  ancestor: string,
+  descendant: string
+): boolean {
+  return addSep(descendant).startsWith(addSep(ancestor));
+}
+
 export interface SimplifiedPaths {
   roots: string[];
   descendants: string[];

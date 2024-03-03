@@ -85,7 +85,11 @@ export function watch(manager: Manager, runner: Runner): void {
 
   const watchQueue = new Queue<{ event: EventName; path: string }>({
     async handle(item) {
-      const owner = await findPackageOwner(item.path, manager.packages);
+      // get package candidates based on path
+      const packages = manager.packages.filter(pkg => {
+        return pkg.isPathInPackage(item.path);
+      });
+      const owner = await findPackageOwner(item.path, packages);
       if (!owner) {
         return;
       }
@@ -94,10 +98,8 @@ export function watch(manager: Manager, runner: Runner): void {
     }
   });
 
-  // ignore anything coming from node_modules
-  // otherwise, file changes may include symlinks (monorepo)
   chokidarWatch(
     manager.links.map(link => link.src.path),
-    { ignoreInitial: true, ignored: /(?:^|\/)(?:node_modules)(?:$|\/)/ }
+    { ignoreInitial: true }
   ).on('all', (event, path) => watchQueue.enqueue({ event, path }));
 }

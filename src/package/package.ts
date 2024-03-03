@@ -1,7 +1,10 @@
 import Arborist, { Node } from '@npmcli/arborist';
 import { PackageJson } from '@npmcli/package-json';
+import { minimatch } from 'minimatch';
 import packlist from 'npm-packlist';
 import path from 'path';
+import { absolute } from '../utils/path.utils';
+import { isPathDescendant } from '../utils/simplify-paths';
 import { PackageFile } from './package.types';
 import { readPackage } from './read-package';
 import { validatePackagePath } from './validate-package-path';
@@ -51,7 +54,8 @@ export class Package {
     return new Arborist({ path: this.path }).loadActual();
   }
 
-  private async loadPackage(loadNode: boolean, pkgJsonPath: string) {
+  private async loadPackage(loadNode: boolean) {
+    const pkgJsonPath = await validatePackagePath(this.path);
     // load node not required unless it's a src package
     const node = loadNode ? await this.loadNode() : undefined;
     const json = loadNode ? undefined : await readPackage(pkgJsonPath);
@@ -63,8 +67,7 @@ export class Package {
    * @param loadNode Load {@linkcode Node} for source package.
    */
   async init(loadNode: boolean): Promise<void> {
-    const pkgJsonPath = await validatePackagePath(this.path);
-    const loaded = await this.loadPackage(loadNode, pkgJsonPath);
+    const loaded = await this.loadPackage(loadNode);
     // make sure name does not change before saving changes
     const previousName = this.node?.package.name ?? this._json?.name;
     const newName = loaded.node?.package.name ?? loaded.json?.name;
@@ -102,20 +105,47 @@ export class Package {
     }
   }
 
-  async getFile(
-    filePath: string,
-    refresh = true
-  ): Promise<PackageFile | undefined> {
+  async getFile(filePath: string): Promise<PackageFile | undefined> {
     // check if part of src path
-    filePath = path.isAbsolute(filePath)
-      ? filePath
-      : path.resolve(this.path, filePath);
+    filePath = absolute(filePath, this.path);
     let file = this.fileLookup[filePath];
     if (!file) {
       // if no match, reload package files
-      await this.loadFiles(refresh);
+      await this.loadFiles(true);
       file = this.fileLookup[filePath];
     }
     return file;
+  }
+
+  isPathInPackage(filePath: string): boolean {
+    // may not be always accurate but should be good for most cases
+    filePath = absolute(filePath, this.path);
+    if (this.fileLookup[filePath]) {
+      return true;
+    } else if (!isPathDescendant(this.path, filePath)) {
+      return false;
+    }
+    // make sure file is not part of direct node_modules
+    const relPath = path.relative(this.path, filePath);
+    if (/^(?:node_modules)(?:$|\/)/.test(relPath)) {
+      return false;
+    }
+    // if no package files to compare,
+    // give up and let this file in for processing
+    const files = this.json.files || [];
+    if (files.length === 0) {
+      return true;
+    }
+    // try to match files. is the last check ok?
+    for (const file of files) {
+      if (
+        relPath === file ||
+        minimatch(relPath, file) ||
+        minimatch(relPath, file + '/**')
+      ) {
+        return true;
+      }
+    }
+    return false;
   }
 }
