@@ -4,8 +4,11 @@
   "description": "Link local Node.js packages.",
   "keywords": [
     "link",
+    "local",
     "package",
-    "local"
+    "module",
+    "cli",
+    "command"
   ],
   "homepage": "https://github.com/Arnesfield/lnpkg#readme",
   "bugs": {
