@@ -2,6 +2,11 @@
   "name": "lnpkg",
   "version": "0.0.1-alpha.1",
   "description": "Link local Node.js packages.",
+  "keywords": [
+    "link",
+    "package",
+    "local"
+  ],
   "homepage": "https://github.com/Arnesfield/lnpkg#readme",
   "bugs": {
     "url": "https://github.com/Arnesfield/lnpkg/issues"
