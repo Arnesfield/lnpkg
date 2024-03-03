@@ -1,4 +1,4 @@
-import Arborist, { Node } from '@npmcli/arborist';
+import Arborist from '@npmcli/arborist';
 import { PackageJson } from '@npmcli/package-json';
 import { minimatch } from 'minimatch';
 import packlist from 'npm-packlist';
@@ -10,7 +10,7 @@ import { readPackage } from './read-package';
 import { validatePackagePath } from './validate-package-path';
 
 export class Package {
-  private node: Node | undefined;
+  private node: Arborist.Node | undefined;
   private _json: PackageJson | undefined;
   private _files: PackageFile[] | undefined;
   private fileLookup: { [path: string]: PackageFile | undefined } = {};
@@ -64,7 +64,7 @@ export class Package {
 
   /**
    * Initialize package.
-   * @param loadNode Load {@linkcode Node} for source package.
+   * @param loadNode Load {@linkcode Arborist.Node} for source package.
    */
   async init(loadNode: boolean): Promise<void> {
     const loaded = await this.loadPackage(loadNode);
