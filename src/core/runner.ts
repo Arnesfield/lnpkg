@@ -72,10 +72,9 @@ export class Runner {
     return force || isDependency;
   }
 
-  // previous files
   async refresh(options: {
     link: Link;
-    files: PackageFile[];
+    files: PackageFile[]; // previous files
     copy?: PackageFile[];
     prefix?: PrefixOptions;
   }): Promise<void> {

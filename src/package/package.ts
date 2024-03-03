@@ -118,7 +118,7 @@ export class Package {
   }
 
   isPathInPackage(filePath: string): boolean {
-    // may not be always accurate but should be good for most cases
+    // may not be always accurate but should be good enough for most cases
     filePath = absolute(filePath, this.path);
     if (this.fileLookup[filePath]) {
       return true;

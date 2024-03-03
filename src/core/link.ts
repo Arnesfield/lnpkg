@@ -14,8 +14,8 @@ export class Link {
     );
   }
 
-  // check if src a dependency of dest
   isDependency(): boolean {
+    // check if src a dependency of dest
     return hasDependency(this.dest.json, this.src.json.name || '');
   }
 }

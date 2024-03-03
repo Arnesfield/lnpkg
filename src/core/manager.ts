@@ -30,8 +30,8 @@ export class Manager {
     return srcMap[entry.dest];
   }
 
-  // NOTE: should add new link to watcher when necessary
   async create(entry: Entry): Promise<Link> {
+    // NOTE: should add new link to watcher when necessary
     const exists = {
       src: this.packageMap[entry.src],
       dest: this.packageMap[entry.dest]
