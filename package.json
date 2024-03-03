@@ -5,10 +5,14 @@
   "keywords": [
     "link",
     "local",
-    "package",
-    "module",
+    "packages",
+    "modules",
+    "dependencies",
     "cli",
-    "command"
+    "tool",
+    "npm-link",
+    "multi-package",
+    "package.json"
   ],
   "homepage": "https://github.com/Arnesfield/lnpkg#readme",
   "bugs": {
