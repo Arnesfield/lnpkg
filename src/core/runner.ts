@@ -183,7 +183,7 @@ export class Runner {
 
     timer.start('init');
     try {
-      await pkg.init(true);
+      await pkg.init();
       this.logger.log(prefix, ...logs());
     } catch (error) {
       prefix.error = true;
