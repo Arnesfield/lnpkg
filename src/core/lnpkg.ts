@@ -2,11 +2,11 @@ import chalk from 'chalk';
 import { getEntries } from '../helpers/get-entries';
 import { Logger } from '../helpers/logger';
 import { Timer } from '../utils/timer';
-import { watch } from '../watch/watch';
 import { Link } from './link';
 import { LnPkgOptions } from './lnpkg.types';
 import { Manager } from './manager';
 import { Runner } from './runner';
+import { watch } from './watch';
 
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
   const entries = await getEntries(options);
@@ -40,7 +40,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
       continue;
     }
     if (runner.checkLink(link, { message: message() }) && !watchOnly) {
-      await runner.link(link);
+      await runner.run('copy', { link, files: link.src.files });
     }
   }
 

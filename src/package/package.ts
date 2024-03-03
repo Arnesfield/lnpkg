@@ -42,13 +42,20 @@ export class Package {
     return this._files;
   }
 
-  private async loadNode() {
+  getName(): string | undefined {
+    return this.node?.package.name ?? this._json?.name;
+  }
+
+  private loadNode() {
     // need to create new Arborist instance every init
-    const arborist = new Arborist({ path: this.path });
-    this.node = await arborist.loadActual();
-    // take this opportunity to remove unused json
-    this._json = undefined;
-    return this.node;
+    return new Arborist({ path: this.path }).loadActual();
+  }
+
+  private async loadPackage(loadNode: boolean, pkgJsonPath: string) {
+    // load node not required unless it's a src package
+    const node = loadNode ? await this.loadNode() : undefined;
+    const json = loadNode ? undefined : await readPackage(pkgJsonPath);
+    return { node, json };
   }
 
   /**
@@ -57,12 +64,19 @@ export class Package {
    */
   async init(loadNode: boolean): Promise<void> {
     const pkgJsonPath = await validatePackagePath(this.path);
-    // load not required unless it's a src package
-    if (loadNode) {
-      await this.loadNode();
-    } else {
-      this._json = await readPackage(pkgJsonPath);
+    const loaded = await this.loadPackage(loadNode, pkgJsonPath);
+    // make sure name does not change before saving changes
+    const previousName = this.node?.package.name ?? this._json?.name;
+    const newName = loaded.node?.package.name ?? loaded.json?.name;
+    if (previousName && previousName !== newName) {
+      throw new Error(
+        `Package name changed from "${previousName}" to "${newName}". ` +
+          'Requires a restart to apply directory changes.'
+      );
     }
+
+    this.node = loaded.node;
+    this._json = loaded.json;
     // also load files if they were available when refreshing
     if (this._files) {
       await this.loadFiles(true);
@@ -72,7 +86,9 @@ export class Package {
   async loadFiles(refresh = false): Promise<void> {
     if (refresh || !this._files) {
       // no need to update node when refreshing
-      const node = this.node || (await this.loadNode());
+      const node = (this.node ||= await this.loadNode());
+      // take this opportunity to remove unused json
+      this._json = undefined;
       const files = await packlist(node);
       this.fileLookup = {};
       this._files = files.map(filePath => {
@@ -86,15 +102,18 @@ export class Package {
     }
   }
 
-  async getFile(filePath: string): Promise<PackageFile | undefined> {
+  async getFile(
+    filePath: string,
+    refresh = true
+  ): Promise<PackageFile | undefined> {
     // check if part of src path
     filePath = path.isAbsolute(filePath)
       ? filePath
       : path.resolve(this.path, filePath);
     let file = this.fileLookup[filePath];
     if (!file) {
-      // if no match, reload package files. seems fast enough ¯\_(ツ)_/¯
-      await this.loadFiles(true);
+      // if no match, reload package files
+      await this.loadFiles(refresh);
       file = this.fileLookup[filePath];
     }
     return file;

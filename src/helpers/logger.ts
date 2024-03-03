@@ -1,5 +1,7 @@
 import chalk from 'chalk';
 import path from 'path';
+import stripAnsi from 'strip-ansi';
+import util from 'util';
 import { name } from '../../package.json';
 import { Link } from '../core/link';
 import { Package } from '../package/package';
@@ -27,6 +29,8 @@ export interface PrefixOptions {
 
 export class Logger {
   private readonly color = colors();
+  /** The last log line. */
+  private line: string | undefined;
 
   getDisplayName(pkg: Package): string {
     return chalk[this.color(pkg)].bold(pkg.json.name);
@@ -81,11 +85,28 @@ export class Logger {
     return prefix.join(' ');
   }
 
+  format(options: PrefixOptions, ...params: unknown[]): string {
+    return util.format(this.prefix(options), ...params);
+  }
+
   log(options: PrefixOptions, ...params: unknown[]): void {
-    console.log(this.prefix(options), ...params);
+    this.line = this.format(options, ...params);
+    console.log(this.line);
   }
 
   error(options: PrefixOptions, ...params: unknown[]): void {
-    console.error(this.prefix(options), ...params);
+    this.line = this.format(options, ...params);
+    console.error(this.line);
+  }
+
+  clearPreviousLine(): void {
+    if (typeof this.line !== 'string') {
+      return;
+    }
+    const log = stripAnsi(this.line);
+    const lines = Math.ceil(log.length / process.stdout.columns);
+    // cursor up and start of lines
+    // clear from cursor to end of screen
+    process.stdout.write(`\x1b[${lines}F` + '\x1b[0J');
   }
 }

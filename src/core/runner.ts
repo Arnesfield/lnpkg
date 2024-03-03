@@ -1,5 +1,6 @@
 import chalk from 'chalk';
 import path from 'path';
+import { diffFiles } from '../helpers/diff-files';
 import { Logger, PrefixOptions } from '../helpers/logger';
 import { PackageFile } from '../package/package.types';
 import { cwd } from '../utils/cwd';
@@ -71,51 +72,91 @@ export class Runner {
     return force || isDependency;
   }
 
-  async link(link: Link): Promise<void> {
-    const promises = link.src.files.map(file => {
-      return this.run('copy', { link, file });
+  // previous files
+  async refresh(options: {
+    link: Link;
+    files: PackageFile[];
+    copy?: PackageFile[];
+    prefix?: PrefixOptions;
+  }): Promise<void> {
+    const { link, files, copy, prefix } = options;
+    const diff = diffFiles(files, link.src.files);
+    await this.run('remove', { link, files: diff.removed, prefix });
+    await this.run('copy', { link, prefix, files: copy || [] });
+    await this.run('copy', {
+      link,
+      prefix,
+      label: '+added',
+      files: diff.added
     });
-    await Promise.all(promises);
   }
 
   async run(
     type: 'copy' | 'remove',
     options: {
       link: Link;
-      file: PackageFile;
-      watchMode?: boolean;
-      nth?: PrefixOptions['nth'];
+      files: PackageFile[];
+      label?: string;
+      prefix?: PrefixOptions;
     }
   ): Promise<void> {
     const { dryRun, force, skip } = this.options;
-    const { link, file, nth, watchMode } = options;
-    if ((!force || skip) && !link.isDependency()) {
+    const { link, files } = options;
+    if (files.length === 0 || ((!force || skip) && !link.isDependency())) {
       // do nothing if not a dependency
       return;
     }
-    const destFilePath = link.getDestPath(file.filePath);
+
+    let count = 0;
+    // handle tty for progress loader
+    const { isTTY } = process.stdout;
+    // no need to clear timer
     const timer = new Timer();
-    const prefix: PrefixOptions = { link, nth, time: watchMode };
-    const logs = () => [
-      chalk.bgBlack.bold[type === 'copy' ? 'blue' : 'magenta'](type),
-      file.filePath,
-      chalk.yellow(timer.diff('file'))
-    ];
+    const prefix: PrefixOptions = { link, dryRun, ...options.prefix };
+    const [color, label] =
+      type === 'copy'
+        ? (['green', '+copied'] as const)
+        : (['red', '-removed'] as const);
+    const logs = () => {
+      const logs = [
+        chalk.bgBlack[color](options.label || label),
+        `${count}/${files.length}`
+      ];
+      // show progress percentage
+      if (count !== files.length) {
+        const percent = Math.min(100, Math.ceil((count / files.length) * 100));
+        logs.push(`(${percent}%)`);
+      }
+      logs.push(chalk.yellow(timer.diff('file', true)));
+      return logs;
+    };
 
     timer.start('file');
+    if (isTTY) {
+      this.logger.log(prefix, ...logs());
+    }
     try {
-      let log = true;
-      if (dryRun) {
-        // do nothing
-      } else if (type === 'copy') {
-        await cp(file.path, destFilePath);
-      } else if (!(await rm(destFilePath))) {
-        log = false;
-      }
-      if (log) {
-        prefix.dryRun = dryRun;
-        this.logger.log(prefix, ...logs());
-      }
+      const promises = files.map(async (file, index) => {
+        const destFilePath = link.getDestPath(file.filePath);
+        let success = true;
+        if (dryRun) {
+          // do nothing
+        } else if (type === 'copy') {
+          await cp(file.path, destFilePath);
+        } else if (!(await rm(destFilePath))) {
+          success = false;
+        }
+        // do not count failed operations
+        count += +success;
+        // for non tty, log only last result
+        if (isTTY) {
+          this.logger.clearPreviousLine();
+        }
+        if (isTTY || index === files.length - 1) {
+          this.logger.log(prefix, ...logs());
+        }
+      });
+      await Promise.all(promises);
     } catch (error) {
       prefix.error = true;
       this.logger.error(
@@ -126,21 +167,16 @@ export class Runner {
     }
   }
 
-  async reinit(link: Link, nth?: PrefixOptions['nth']): Promise<void> {
-    const pkg = link.src;
-    const file = pkg.getFile('package.json');
-    if (!file) {
-      return;
-    }
+  async reinit(options: { link: Link; prefix?: PrefixOptions }): Promise<void> {
+    const pkg = options.link.src;
     const timer = new Timer();
     const prefix: PrefixOptions = {
       pkg,
-      nth,
-      time: true,
-      dryRun: this.options.dryRun
+      dryRun: this.options.dryRun,
+      ...options.prefix
     };
     const logs = () => [
-      chalk.bgBlack.bold.green('init'),
+      chalk.bgBlack.cyan('init'),
       'Reinitialize package:',
       chalk.dim(path.relative(this.cwd, pkg.path) || '.'),
       chalk.yellow(timer.diff('init'))

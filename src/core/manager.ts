@@ -8,10 +8,15 @@ export interface Entry {
 
 export class Manager {
   readonly links: Link[] = [];
+  readonly packages: Package[] = [];
   private readonly linkLookup: {
     [src: string]: { [dest: string]: Link | undefined } | undefined;
   } = {};
   private readonly packageMap: { [path: string]: Package | undefined } = {};
+
+  getPackage(path: string): Package | undefined {
+    return this.packageMap[path];
+  }
 
   count(): { links: number; packages: number } {
     return {
@@ -43,10 +48,18 @@ export class Manager {
     return this.save(new Link(src, dest));
   }
 
+  private savePackages(...packages: Package[]) {
+    for (const pkg of packages) {
+      if (!this.packageMap[pkg.path]) {
+        this.packageMap[pkg.path] = pkg;
+        this.packages.push(pkg);
+      }
+    }
+  }
+
   private save(link: Link) {
     // save to map and lookup
-    this.packageMap[link.src.path] = link.src;
-    this.packageMap[link.dest.path] = link.dest;
+    this.savePackages(link.src, link.dest);
     const srcMap = (this.linkLookup[link.src.path] ||= {});
     srcMap[link.dest.path] = link;
     this.links.push(link);
