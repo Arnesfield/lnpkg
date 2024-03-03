@@ -116,54 +116,46 @@ export class Runner {
       type === 'copy'
         ? (['green', '+copied'] as const)
         : (['red', '-removed'] as const);
-    const logs = () => {
-      const logs = [
-        chalk.bgBlack[color](options.label || label),
-        `${count}/${files.length}`
-      ];
-      // show progress percentage
-      if (count !== files.length) {
-        const percent = Math.min(100, Math.ceil((count / files.length) * 100));
-        logs.push(`(${percent}%)`);
-      }
-      logs.push(chalk.yellow(timer.diff('file', true)));
-      return logs;
-    };
+    const logs = () => [
+      chalk.bgBlack[color](options.label || label),
+      `${count}/${files.length}`,
+      chalk.yellow(timer.diff('file', true))
+    ];
 
     timer.start('file');
     if (isTTY) {
       this.logger.log(prefix, ...logs());
     }
-    try {
-      const promises = files.map(async (file, index) => {
-        const destFilePath = link.getDestPath(file.filePath);
-        let success = true;
-        if (dryRun) {
-          // do nothing
-        } else if (type === 'copy') {
+    const promises = files.map(async (file, index) => {
+      const destFilePath = link.getDestPath(file.filePath);
+      let success = true;
+      if (dryRun) {
+        // do nothing
+      } else if (type === 'copy') {
+        try {
           await cp(file.path, destFilePath);
-        } else if (!(await rm(destFilePath))) {
+          // unlike removeFile, adding file probably doesn't do anything
+          // since files are refreshed almost always before run
+        } catch {
+          // ignore error?
           success = false;
         }
-        // do not count failed operations
-        count += +success;
-        // for non tty, log only last result
-        if (isTTY) {
-          this.logger.clearPreviousLine();
-        }
-        if (isTTY || index === files.length - 1) {
-          this.logger.log(prefix, ...logs());
-        }
-      });
-      await Promise.all(promises);
-    } catch (error) {
-      prefix.error = true;
-      this.logger.error(
-        prefix,
-        ...logs(),
-        error instanceof Error ? error.toString() : error
-      );
-    }
+      } else if (await rm(destFilePath)) {
+        link.src.removeFile(file.filePath);
+      } else {
+        success = false;
+      }
+      // do not count failed operations
+      count += +success;
+      // for non tty, log only last result
+      if (isTTY) {
+        this.logger.clearPreviousLine();
+      }
+      if (isTTY || index === files.length - 1) {
+        this.logger.log(prefix, ...logs());
+      }
+    });
+    await Promise.all(promises);
   }
 
   async reinit(options: { link: Link; prefix?: PrefixOptions }): Promise<void> {
@@ -175,7 +167,7 @@ export class Runner {
       ...options.prefix
     };
     const logs = () => [
-      chalk.bgBlack.cyan('init'),
+      chalk.bgBlack.cyan('~init'),
       'Reinitialize package:',
       chalk.dim(path.relative(this.cwd, pkg.path) || '.'),
       chalk.yellow(timer.diff('init'))

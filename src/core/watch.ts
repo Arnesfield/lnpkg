@@ -48,15 +48,15 @@ export function watch(manager: Manager, runner: Runner): void {
 
         // for package.json changes, unlink existing files and reinit
         if (!didInit[link.src.path]) {
-          const { files } = link.src;
+          const files = link.src.files.slice();
           const pkgJson = files.find(file => file.filePath === 'package.json');
           didInit[link.src.path] = { files, copy: pkgJson ? [pkgJson] : [] };
           // reinit after caching files to refresh
           await runner.reinit({ link, prefix });
         }
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const cached = didInit[link.src.path]!;
         if (runner.checkLink(link, prefix)) {
+          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+          const cached = didInit[link.src.path]!;
           await runner.refresh({ link, prefix, ...cached });
         }
       }

@@ -90,6 +90,21 @@ export class Package {
     return file;
   }
 
+  removeFile(filePath: string): void {
+    filePath = absolute(filePath, this.path);
+    const file = this.fileLookup[filePath];
+    if (!file) {
+      return;
+    }
+    const index = (this._files || []).findIndex(file => file.path === filePath);
+    if (index > -1) {
+      // retain reference to current files
+      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+      this._files!.splice(index, 1);
+    }
+    delete this.fileLookup[filePath];
+  }
+
   isPathInPackage(filePath: string): boolean {
     // may not be always accurate but should be good enough for most cases
     filePath = absolute(filePath, this.path);
