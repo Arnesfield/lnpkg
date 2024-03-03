@@ -8,7 +8,8 @@
 
 Link local Node.js packages.
 
-> [!NOTE] WIP!
+> [!NOTE]
+>
 > README is still a work in progress.
 
 ## Install
