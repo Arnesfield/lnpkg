@@ -43,16 +43,17 @@ export class Runner {
         ...pathLink
       );
     } else if (!skip) {
-      const message = ['%s is not a dependency of %s.'];
+      const message = ['%s is not a dependency of %s%s'];
       const params = [
         this.logger.getDisplayName(link.src),
-        this.logger.getDisplayName(link.dest)
+        this.logger.getDisplayName(link.dest),
+        force ? ':' : '.'
       ];
       if (!force) {
-        message.push('Use %s option to allow this link.');
+        message.push('Use %s option to allow this link:');
         params.push(chalk.bold('--force'));
       }
-      message.push('(%s %s %s)');
+      message.push('%s %s %s');
       if (options?.message) {
         message.push(options.message);
       }
