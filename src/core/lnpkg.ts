@@ -8,6 +8,10 @@ import { Manager } from './manager';
 import { Runner } from './runner';
 import { watch } from './watch';
 
+/**
+ * Link local Node.js packages.
+ * @param options Link package options.
+ */
 export async function lnpkg(options: LnPkgOptions): Promise<void> {
   const entries = await getEntries(options);
   if (entries.length === 0) {
