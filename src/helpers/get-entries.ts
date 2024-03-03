@@ -2,8 +2,8 @@ import { glob } from 'glob';
 import path from 'path';
 import { LnPkgOptions } from '../core/lnpkg.types';
 import { Entry } from '../core/manager';
-import { cwd } from '../utils/cwd';
 import { ensureArray } from '../utils/ensure-array';
+import { cwd } from '../utils/path.utils';
 
 export interface GetEntriesOptions
   extends Pick<LnPkgOptions, 'cwd' | 'dest' | 'input'> {}

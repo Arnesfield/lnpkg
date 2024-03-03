@@ -1,6 +1,6 @@
 import { Command } from 'commander';
 import { LnPkgOptions } from '../core/lnpkg.types';
-import { cwd } from '../utils/cwd';
+import { cwd } from '../utils/path.utils';
 import { ProgramOptions } from './command';
 import { mergeOptions } from './merge-options';
 import { resolveConfigs } from './resolve-config';
