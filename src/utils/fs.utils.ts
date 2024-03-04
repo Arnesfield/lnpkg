@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-export async function lstat(value: string): Promise<fs.Stats> {
+async function lstat(value: string): Promise<fs.Stats> {
   try {
     return await fs.promises.lstat(value);
   } catch (error) {
@@ -10,6 +10,14 @@ export async function lstat(value: string): Promise<fs.Stats> {
       (error as NodeJS.ErrnoException).code === 'ENOENT';
     throw isNotFound ? new Error(`No such file or directory: ${value}`) : error;
   }
+}
+
+export async function readFile(value: string): Promise<Buffer> {
+  const stats = await lstat(value);
+  if (!stats.isFile()) {
+    throw new Error(`Not a file: ${value}`);
+  }
+  return fs.promises.readFile(value);
 }
 
 export async function cp(src: string, dest: string): Promise<void> {
@@ -22,11 +30,6 @@ export async function cp(src: string, dest: string): Promise<void> {
   await fs.promises.cp(src, dest, { recursive: true });
 }
 
-export async function rm(value: string): Promise<boolean> {
-  try {
-    await fs.promises.rm(value, { recursive: true });
-    return true;
-  } catch {
-    return false;
-  }
+export async function rm(value: string): Promise<void> {
+  await fs.promises.rm(value, { recursive: true });
 }

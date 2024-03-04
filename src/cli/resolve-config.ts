@@ -1,7 +1,7 @@
-import fs from 'fs';
 import path from 'path';
 import { LnPkgOptions } from '../core/lnpkg.types';
 import { ensureArray } from '../utils/ensure-array';
+import { readFile } from '../utils/fs.utils';
 import { getStdin } from '../utils/stdin';
 
 export async function resolveConfigs(
@@ -21,7 +21,7 @@ async function resolveConfig(cwd: string, config: string) {
     config === '-'
       ? await getStdin()
       : typeof config === 'string'
-      ? await fs.promises.readFile(path.resolve(cwd, config))
+      ? await readFile(path.resolve(cwd, config))
       : undefined;
   const options: LnPkgOptions = buffer ? JSON.parse(buffer.toString()) : {};
   // in case options is not a valid object

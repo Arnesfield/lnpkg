@@ -15,7 +15,10 @@ export class Link {
   }
 
   isDependency(): boolean {
-    // check if src a dependency of dest
-    return hasDependency(this.dest.json, this.src.json.name || '');
+    // check if src is a dependency of dest.
+    // keep dependency check in Link instead of Package
+    // since only dest packages actually need this check
+    const { name } = this.src.json;
+    return typeof name === 'string' && hasDependency(this.dest.json, name);
   }
 }

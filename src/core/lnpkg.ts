@@ -1,6 +1,7 @@
 import chalk from 'chalk';
 import { getEntries } from '../helpers/get-entries';
 import { Logger } from '../helpers/logger';
+import { errorLog } from '../utils/error';
 import { Timer } from '../utils/timer';
 import { Link } from './link';
 import { LnPkgOptions } from './lnpkg.types';
@@ -36,11 +37,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     try {
       link = await manager.create(entry);
     } catch (error) {
-      logger.error(
-        { error: true },
-        error instanceof Error ? error.toString() : error,
-        message()
-      );
+      logger.error({ error: true }, errorLog(error), message());
       continue;
     }
     if (runner.checkLink(link, { message: message() }) && !watchOnly) {

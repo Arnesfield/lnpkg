@@ -23,11 +23,7 @@ export function watch(manager: Manager, runner: Runner): void {
       }
       const prefix: PrefixOptions = { time: true, nth: { index, total } };
       // reinitialize only once for package.json changes
-      const didInit: {
-        [path: string]:
-          | { files: PackageFile[]; copy: PackageFile[] }
-          | undefined;
-      } = {};
+      const cachedInit: { [path: string]: PackageFile[] | undefined } = {};
       // find all links with this source package
       for (const link of manager.links) {
         if (link.src !== item.package) {
@@ -47,17 +43,21 @@ export function watch(manager: Manager, runner: Runner): void {
         }
 
         // for package.json changes, unlink existing files and reinit
-        if (!didInit[link.src.path]) {
+        if (!cachedInit[link.src.path]) {
+          // remove package.json to include it in refresh copy
           const files = link.src.files.slice();
-          const pkgJson = files.find(file => file.filePath === 'package.json');
-          didInit[link.src.path] = { files, copy: pkgJson ? [pkgJson] : [] };
+          const index = link.src.indexOf('package.json');
+          if (index > -1) {
+            files.splice(index, 1);
+          }
+          cachedInit[link.src.path] = files;
           // reinit after caching files to refresh
           await runner.reinit({ link, prefix });
         }
         if (runner.checkLink(link, prefix)) {
           // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const cached = didInit[link.src.path]!;
-          await runner.refresh({ link, prefix, ...cached });
+          const files = cachedInit[link.src.path]!;
+          await runner.refresh({ link, prefix, files });
         }
       }
     }

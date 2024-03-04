@@ -33,7 +33,7 @@ export class Logger {
   private line: string | undefined;
 
   getDisplayName(pkg: Package): string {
-    return chalk[this.color(pkg)].bold(pkg.json.name);
+    return chalk[this.color(pkg)].bold(pkg.displayName);
   }
 
   getPathLink(options: GetPathLinkOptions): string[] {

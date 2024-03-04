@@ -3,6 +3,7 @@ import path from 'path';
 import { diffFiles } from '../helpers/diff-files';
 import { Logger, PrefixOptions } from '../helpers/logger';
 import { PackageFile } from '../package/package.types';
+import { errorLog } from '../utils/error';
 import { cp, rm } from '../utils/fs.utils';
 import { cwd } from '../utils/path.utils';
 import { Timer } from '../utils/timer';
@@ -76,29 +77,17 @@ export class Runner {
   async refresh(options: {
     link: Link;
     files: PackageFile[]; // previous files
-    copy?: PackageFile[];
     prefix?: PrefixOptions;
   }): Promise<void> {
-    const { link, files, copy, prefix } = options;
+    const { link, files, prefix } = options;
     const diff = diffFiles(files, link.src.files);
-    await this.run('remove', { link, files: diff.removed, prefix });
-    await this.run('copy', { link, prefix, files: copy || [] });
-    await this.run('copy', {
-      link,
-      prefix,
-      label: '+added',
-      files: diff.added
-    });
+    await this.run('remove', { link, prefix, files: diff.removed });
+    await this.run('copy', { link, prefix, files: diff.added });
   }
 
   async run(
     type: 'copy' | 'remove',
-    options: {
-      link: Link;
-      files: PackageFile[];
-      label?: string;
-      prefix?: PrefixOptions;
-    }
+    options: { link: Link; files: PackageFile[]; prefix?: PrefixOptions }
   ): Promise<void> {
     const { dryRun, force, skip } = this.options;
     const { link, files } = options;
@@ -107,7 +96,7 @@ export class Runner {
       return;
     }
 
-    let count = 0;
+    const count = { done: 0, error: 0 };
     // handle tty for progress loader
     const { isTTY } = process.stdout;
     // no need to clear timer
@@ -117,42 +106,56 @@ export class Runner {
       type === 'copy'
         ? (['green', '+copied'] as const)
         : (['red', '-removed'] as const);
-    const logs = () => [
-      chalk.bgBlack[color](options.label || label),
-      `${count}/${files.length}`,
-      chalk.yellow(timer.diff('file', true))
-    ];
+    const displayType = chalk.bgBlack[color](label);
+    const logs = () => {
+      return ([] as (string | number)[]).concat(
+        displayType,
+        `${count.done}/${files.length}`,
+        count.error > 0 ? [chalk.bgBlack.red('-error'), count.error] : [],
+        chalk.yellow(timer.diff('file', true))
+      );
+    };
 
     timer.start('file');
     if (isTTY) {
       this.logger.log(prefix, ...logs());
     }
-    const promises = files.map(async (file, index) => {
+    const promises = files.map(async file => {
       const destFilePath = link.getDestPath(file.filePath);
-      let success = true;
-      if (dryRun) {
-        // do nothing
-      } else if (type === 'copy') {
-        try {
+      try {
+        if (dryRun) {
+          // do nothing
+        } else if (type === 'copy') {
           await cp(file.path, destFilePath);
           // unlike removeFile, adding file probably doesn't do anything
           // since files are refreshed almost always before run
-        } catch {
-          // ignore error?
-          success = false;
+        } else if (type === 'remove') {
+          await rm(destFilePath);
+          link.src.removeFile(file.filePath);
         }
-      } else if (await rm(destFilePath)) {
-        link.src.removeFile(file.filePath);
-      } else {
-        success = false;
+        count.done++;
+      } catch (error) {
+        count.error++;
+        if (isTTY) {
+          this.logger.clearPreviousLine();
+        }
+        this.logger.error(
+          { ...prefix, error: true },
+          displayType,
+          file.filePath,
+          chalk.yellow(timer.diff('file', true)),
+          errorLog(error)
+        );
+        // log again to avoid clearing error line
+        if (isTTY) {
+          this.logger.log(prefix, ...logs());
+        }
       }
-      // do not count failed operations
-      count += +success;
       // for non tty, log only last result
       if (isTTY) {
         this.logger.clearPreviousLine();
       }
-      if (isTTY || index === files.length - 1) {
+      if (isTTY || count.done + count.error === files.length) {
         this.logger.log(prefix, ...logs());
       }
     });
@@ -176,15 +179,11 @@ export class Runner {
 
     timer.start('init');
     try {
-      await pkg.init(true);
+      await pkg.init();
       this.logger.log(prefix, ...logs());
     } catch (error) {
       prefix.error = true;
-      this.logger.error(
-        prefix,
-        ...logs(),
-        error instanceof Error ? error.toString() : error
-      );
+      this.logger.error(prefix, ...logs(), errorLog(error));
     }
   }
 }
