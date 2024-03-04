@@ -1,15 +1,19 @@
-import Arborist from '@npmcli/arborist';
+import type Arborist from '@npmcli/arborist';
 import { PackageJson } from '@npmcli/package-json';
 import { minimatch } from 'minimatch';
-import packlist from 'npm-packlist';
 import path from 'path';
+import { npmPackFiles } from '../helpers/npm-pack-files';
 import { absolute } from '../utils/path.utils';
 import { isPathDescendant } from '../utils/simplify-paths';
+import { try2do } from '../utils/try2do';
 import { loadNode } from './load-node';
 import { PackageFile } from './package.types';
+import { readPackage } from './read-package';
+import { validatePackagePath } from './validate-package-path';
 
 export class Package {
   private _node: Arborist.Node | undefined;
+  private _json: PackageJson | undefined;
   private _files: PackageFile[] | undefined;
   private _displayName: string | undefined;
   private fileLookup: { [path: string]: PackageFile | undefined } = {};
@@ -21,8 +25,12 @@ export class Package {
     readonly path: string
   ) {}
 
+  get name(): string | undefined {
+    return this._node?.package.name ?? this._json?.name;
+  }
+
   get displayName(): string | undefined {
-    return this._displayName ?? this._node?.package.name;
+    return this._displayName ?? this.name;
   }
 
   set displayName(value: string | undefined) {
@@ -37,36 +45,66 @@ export class Package {
   }
 
   get json(): PackageJson {
-    return this.node.package;
+    const json = this._node?.package ?? this._json;
+    if (!json) {
+      throw new Error(`Package not initialized: ${this.path}`);
+    }
+    return json;
   }
 
   get files(): PackageFile[] {
     if (!this._files) {
-      const pkgName = this._node?.package.name || '';
+      const pkgName = this.name;
       const name = pkgName && pkgName + ' ';
       throw new Error('Package files not loaded: ' + name + this.path);
     }
     return this._files;
   }
 
-  private async loadNode() {
-    const node = await loadNode(this.path);
+  private async _init() {
+    const Arborist = await try2do(() => import('@npmcli/arborist'));
+    const previousName = this.name;
+    const values: { node?: Arborist.Node; json?: PackageJson } = {};
+    let newName: string | undefined;
+    // use either arborist instance or load manually
+    if (Arborist) {
+      values.node = await loadNode(this.path, Arborist.default);
+      newName = values.node.package.name;
+    } else {
+      const pkgJsonPath = await validatePackagePath(this.path);
+      values.json = await readPackage(pkgJsonPath);
+      newName = values.json.name;
+    }
+
+    if (!newName) {
+      throw new Error(`Package name is required: ${this.path}/package.json`);
+    }
     // make sure name does not change before saving changes
-    const previousName = this._node?.package.name;
-    const newName = node.package.name;
-    if (this._node && previousName !== newName) {
+    if (typeof previousName === 'string' && previousName !== newName) {
       throw new Error(
         `Package name changed from "${previousName}" to "${newName}". ` +
           'Requires a restart to apply directory changes.'
       );
     }
-    return node;
+
+    this._node = values.node;
+    this._json = values.json;
+  }
+
+  private async _packlist() {
+    // no need to update node when refreshing
+    const packlist = this._node
+      ? await try2do(() => import('npm-packlist'))
+      : undefined;
+    return packlist
+      ? packlist.default(this.node)
+      : npmPackFiles({ cwd: this.path });
   }
 
   async init(): Promise<void> {
     // NOTE: assume that there is no way for `init` and `loadFiles`
     // to be called multiple times at the same time for the same package
-    this._node = await this.loadNode();
+    await this._init();
     // also load files if they were available when refreshing
     if (this._files) {
       await this.loadFiles(true);
@@ -75,8 +113,7 @@ export class Package {
 
   async loadFiles(refresh = false): Promise<void> {
     if (refresh || !this._files) {
-      // no need to update node when refreshing
-      const files = await packlist(this.node);
+      const files = await this._packlist();
       this.fileLookup = {};
       this._files = files.map(filePath => {
         const file: PackageFile = {

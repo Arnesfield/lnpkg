@@ -5,6 +5,7 @@ import { Logger } from '../helpers/logger';
 import { errorLog } from '../utils/error';
 import { pluralize } from '../utils/pluralize';
 import { Timer } from '../utils/timer';
+import { try2do } from '../utils/try2do';
 import { Link } from './link';
 import { LnPkg, LnPkgOptions } from './lnpkg.types';
 import { Manager } from './manager';
@@ -23,6 +24,19 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
   }
 
   const logger = new Logger();
+  const hasDeps = await try2do(async () => {
+    await import('@npmcli/arborist');
+    await import('npm-packlist');
+    return true;
+  });
+  if (!hasDeps) {
+    // TODO: update message
+    logger.log(
+      { app: true },
+      'Partial install detected. Using npm for package listing.'
+    );
+  }
+
   const manager = new Manager();
   const runner = new Runner(logger, options);
   const timer = new Timer();

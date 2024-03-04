@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { isNoEntryError } from './error';
 
-async function lstat(value: string): Promise<fs.Stats> {
+export async function lstat(value: string): Promise<fs.Stats> {
   try {
     return await fs.promises.lstat(value);
   } catch (error) {
