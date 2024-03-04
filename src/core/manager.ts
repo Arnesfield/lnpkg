@@ -19,7 +19,7 @@ export class Manager {
     return this.packageMap[path];
   }
 
-  count(): { links: number; packages: number } {
+  stats(): { links: number; packages: number } {
     return {
       links: this.links.length,
       packages: Object.keys(this.packageMap).length

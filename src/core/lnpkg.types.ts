@@ -56,3 +56,45 @@ export interface LnPkgOptions {
    */
   watchOnly?: boolean;
 }
+
+/**
+ * The LnPkg stats.
+ */
+export interface LnPkgStats {
+  /**
+   * Total number of links (source package -> destination package).
+   */
+  links: number;
+  /**
+   * Total number of packages.
+   */
+  packages: number;
+  /**
+   * Total number of errors.
+   */
+  errors: number;
+  /**
+   * Total number of warnings.
+   */
+  warnings: number;
+}
+
+/**
+ * The LnPkg object.
+ */
+export interface LnPkg {
+  /**
+   * Get the LnPkg stats.
+   * @returns The LnPkg stats.
+   */
+  stats(): LnPkgStats;
+  /**
+   * Close the watcher if it exists.
+   */
+  close(): Promise<void>;
+  /**
+   * Check if the watcher exists and is watching for package file changes.
+   * @returns `true` if the watcher exists.
+   */
+  isWatching(): boolean;
+}

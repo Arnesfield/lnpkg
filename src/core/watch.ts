@@ -1,4 +1,4 @@
-import { watch as chokidarWatch } from 'chokidar';
+import { FSWatcher, watch as chokidarWatch } from 'chokidar';
 import throttle from 'lodash.throttle';
 import path from 'path';
 import { findPackageOwner } from '../helpers/find-package-owner';
@@ -13,7 +13,7 @@ import { RunType, Runner } from './runner';
 
 type EventName = 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
 
-export function watch(manager: Manager, runner: Runner): void {
+export function watch(manager: Manager, runner: Runner): FSWatcher {
   const runQueue = new Queue<{
     type: RunType;
     package: Package;
@@ -117,7 +117,7 @@ export function watch(manager: Manager, runner: Runner): void {
     }
   });
 
-  chokidarWatch(
+  return chokidarWatch(
     manager.links.map(link => link.src.path),
     { ignoreInitial: true }
   ).on('all', (event, path) => watchQueue.enqueue({ event, path }));

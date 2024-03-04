@@ -1,10 +1,12 @@
 import chalk from 'chalk';
+import { FSWatcher } from 'chokidar';
 import { getEntries } from '../helpers/get-entries';
 import { Logger } from '../helpers/logger';
 import { errorLog } from '../utils/error';
+import { pluralize } from '../utils/pluralize';
 import { Timer } from '../utils/timer';
 import { Link } from './link';
-import { LnPkgOptions } from './lnpkg.types';
+import { LnPkg, LnPkgOptions } from './lnpkg.types';
 import { Manager } from './manager';
 import { Runner } from './runner';
 import { watch } from './watch';
@@ -12,8 +14,9 @@ import { watch } from './watch';
 /**
  * Link local Node.js packages.
  * @param options Link package options.
+ * @returns The LnPkg object.
  */
-export async function lnpkg(options: LnPkgOptions): Promise<void> {
+export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
   const entries = await getEntries(options);
   if (entries.length === 0) {
     throw new Error('No entries found.');
@@ -45,19 +48,36 @@ export async function lnpkg(options: LnPkgOptions): Promise<void> {
     }
   }
 
-  const count = manager.count();
+  // NOTE: exposing lnpkg object means that the
+  // referenced objects are kept in memory (probably)
+  let watcher: FSWatcher | undefined;
+  const lnpkg: LnPkg = {
+    stats: () => ({ ...manager.stats(), ...logger.stats }),
+    isWatching: () => !!watcher,
+    async close() {
+      await watcher?.close();
+      watcher = undefined;
+    }
+  };
+
+  const s = lnpkg.stats();
   logger.log(
-    { app: true, message: 'Loaded %o packages, %o %s:' },
-    count.packages,
-    count.links,
-    count.links === 1 ? 'link' : 'links',
+    { app: true, message: 'Found %o %s, %o %s (%o %s, %o %s) in' },
+    s.packages,
+    pluralize('package', s.packages),
+    s.links,
+    pluralize('link', s.links),
+    s.errors,
+    pluralize('error', s.errors),
+    s.warnings,
+    pluralize('warning', s.warnings),
     chalk.yellow(timer.diff('main'))
   );
 
-  if (options.watch || watchOnly) {
-    watch(manager, runner);
-    if (manager.links.length > 0) {
-      logger.log({ app: true }, 'Watching for package file changes.');
-    }
+  // watch only if links are available
+  if (manager.links.length > 0 && (options.watch || watchOnly)) {
+    watcher = watch(manager, runner);
+    logger.log({ app: true }, 'Watching for package file changes.');
   }
+  return lnpkg;
 }

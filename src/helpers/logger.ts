@@ -29,6 +29,7 @@ export interface PrefixOptions {
 
 export class Logger {
   private readonly color = colors();
+  readonly stats = { errors: 0, warnings: 0 };
   /** The last log line. */
   private line: string | undefined;
 
@@ -85,18 +86,25 @@ export class Logger {
     return prefix.join(' ');
   }
 
-  format(options: PrefixOptions, ...params: unknown[]): string {
-    return util.format(this.prefix(options), ...params);
+  private print(
+    type: 'log' | 'error',
+    options: PrefixOptions,
+    params: unknown[]
+  ): void {
+    if (type !== 'log') {
+      this.stats[options.warn ? 'warnings' : 'errors']++;
+    }
+    const prefix = this.prefix(options);
+    this.line = util.format(prefix, ...params);
+    console[type](prefix, ...params);
   }
 
   log(options: PrefixOptions, ...params: unknown[]): void {
-    this.line = this.format(options, ...params);
-    console.log(this.line);
+    this.print('log', options, params);
   }
 
   error(options: PrefixOptions, ...params: unknown[]): void {
-    this.line = this.format(options, ...params);
-    console.error(this.line);
+    this.print('error', options, params);
   }
 
   clearPreviousLine(): void {
