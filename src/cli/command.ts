@@ -95,25 +95,30 @@ export function createCommand(): Command {
       parseConfig
     )
     .addOption(configsOption)
+    // use implies for toggling to properly override config options
     .addOption(
       new Option(
         '-f, --force',
         'allow link even if source package is not a dependency of destination package'
-      ).conflicts('skip')
+      ).implies({ skip: false })
     )
-    .option(
-      '-s, --skip',
-      'skip link if source package is not a dependency of destination package'
+    .addOption(
+      new Option(
+        '-s, --skip',
+        'skip link if source package is not a dependency of destination package'
+      ).implies({ force: false })
     )
     .addOption(
       new Option(
         '-w, --watch',
         'watch package files for changes after linking packages'
-      ).conflicts('watchOnly')
+      ).implies({ watchOnly: false })
     )
-    .option(
-      '-W, --watch-only',
-      'skip linking packages and watch package files for changes only'
+    .addOption(
+      new Option(
+        '-W, --watch-only',
+        'skip linking packages and watch package files for changes only'
+      ).implies({ watch: false })
     )
     .version(`v${version}`, '-v, --version');
   // add hidden `--no` option for boolean options
