@@ -1,14 +1,14 @@
 import fs from 'fs';
 import path from 'path';
+import { isNoEntryError } from './error';
 
 async function lstat(value: string): Promise<fs.Stats> {
   try {
     return await fs.promises.lstat(value);
   } catch (error) {
-    const isNotFound =
-      error instanceof Error &&
-      (error as NodeJS.ErrnoException).code === 'ENOENT';
-    throw isNotFound ? new Error(`No such file or directory: ${value}`) : error;
+    throw isNoEntryError(error)
+      ? new Error(`No such file or directory: ${value}`)
+      : error;
   }
 }
 
@@ -30,6 +30,14 @@ export async function cp(src: string, dest: string): Promise<void> {
   await fs.promises.cp(src, dest, { recursive: true });
 }
 
-export async function rm(value: string): Promise<void> {
-  await fs.promises.rm(value, { recursive: true });
+export async function rm(value: string): Promise<boolean> {
+  try {
+    await fs.promises.rm(value, { recursive: true });
+    return true;
+  } catch (error) {
+    if (!isNoEntryError(error)) {
+      throw error;
+    }
+    return false;
+  }
 }

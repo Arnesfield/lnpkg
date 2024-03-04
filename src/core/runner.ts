@@ -132,6 +132,7 @@ export class Runner {
           // unlike removeFile, adding file probably doesn't do anything
           // since files are refreshed almost always before run
         } else if (type === 'remove') {
+          // ignore cases where rm does not succeed (e.g. file already removed)
           await rm(destFilePath);
           link.src.removeFile(file.filePath);
         }
