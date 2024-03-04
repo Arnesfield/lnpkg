@@ -13,8 +13,6 @@ export class Manager {
     [src: string]: { [dest: string]: Link | undefined } | undefined;
   } = {};
   private readonly packageMap: { [path: string]: Package | undefined } = {};
-  // since package names cannot change once added,
-  // keep track of total names for display name
   private readonly nameCount: { [name: string]: number | undefined } = {};
 
   getPackage(path: string): Package | undefined {
@@ -57,6 +55,8 @@ export class Manager {
     }
     this.packageMap[pkg.path] = pkg;
     this.packages.push(pkg);
+    // since package names cannot change once added,
+    // keep track of total names for display name.
     // convert to string to handle non string cases (e.g. null, undefined)
     const name = pkg.json.name + '';
     const count = (this.nameCount[name] = (this.nameCount[name] || 0) + 1);

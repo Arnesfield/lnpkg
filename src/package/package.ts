@@ -36,16 +36,10 @@ export class Package {
     return this._node;
   }
 
-  /**
-   * The source `package.json`.
-   */
   get json(): PackageJson {
     return this.node.package;
   }
 
-  /**
-   * Resolved `package.json` files.
-   */
   get files(): PackageFile[] {
     if (!this._files) {
       const pkgName = this._node?.package.name || '';
@@ -69,9 +63,9 @@ export class Package {
     return node;
   }
 
-  // NOTE: assume that there is no way for `init` and `loadFiles`
-  // to be called multiple times at the same time for the same package
   async init(): Promise<void> {
+    // NOTE: assume that there is no way for `init` and `loadFiles`
+    // to be called multiple times at the same time for the same package
     this._node = await this.loadNode();
     // also load files if they were available when refreshing
     if (this._files) {

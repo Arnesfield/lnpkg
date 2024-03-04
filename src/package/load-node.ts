@@ -2,12 +2,12 @@ import Arborist from '@npmcli/arborist';
 
 export async function loadNode(path: string): Promise<Arborist.Node> {
   // need to create new Arborist instance every init
+  // NOTE: reading from source @npmcli/arborist loadActual:
+  // ignoreMissing - skip findMissingEdges
+  // filter - ignore anything related to reading fs since we only need the package
   const arborist = new Arborist({
     path,
-    // NOTE: reading from source @npmcli/arborist loadActual:
-    // skip findMissingEdges
     ignoreMissing: true,
-    // ignore anything related to reading fs since we only need the package
     filter: () => false
   });
   // expect loadActual to already check and validate package.json file
