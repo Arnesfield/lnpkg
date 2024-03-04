@@ -1,20 +1,22 @@
 import { watch as chokidarWatch } from 'chokidar';
 import throttle from 'lodash.throttle';
+import path from 'path';
 import { findPackageOwner } from '../helpers/find-package-owner';
 import { PrefixOptions } from '../helpers/logger';
 import { Package } from '../package/package';
 import { PackageFile } from '../package/package.types';
 import { Batch } from '../utils/batch';
 import { Queue } from '../utils/queue';
+import { simplifyPaths } from '../utils/simplify-paths';
 import { Manager } from './manager';
-import { Runner } from './runner';
+import { RunType, Runner } from './runner';
 
 type EventName = 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
 
 export function watch(manager: Manager, runner: Runner): void {
   const runQueue = new Queue<{
+    type: RunType;
     package: Package;
-    event: EventName;
     files: PackageFile[];
   }>({
     async handle(item, index, total) {
@@ -29,16 +31,13 @@ export function watch(manager: Manager, runner: Runner): void {
         if (link.src !== item.package) {
           continue;
         }
-        const { event, files } = item;
         // reinit if updating package.json
         // NOTE: currently no handler when removing package.json
-        const isRemove = event === 'unlink' || event === 'unlinkDir';
-        if (isRemove || !files.some(file => file.filePath === 'package.json')) {
-          await runner.run(isRemove ? 'remove' : 'copy', {
-            link,
-            files,
-            prefix
-          });
+        if (
+          item.type === 'remove' ||
+          !item.files.some(file => file.filePath === 'package.json')
+        ) {
+          await runner.run(item.type, { link, files: item.files, prefix });
           continue;
         }
 
@@ -63,37 +62,57 @@ export function watch(manager: Manager, runner: Runner): void {
     }
   });
 
-  // package path -> payload
   const watchBatch = new Batch<
     Package,
     { event: EventName; file: PackageFile }
   >();
 
   // throttle before processing batch
+  const addEvents = ['add', 'addDir', 'change'];
   const processBatch = throttle(() => {
-    // group by events
-    const eventBatch = new Batch<EventName, PackageFile>();
+    // group by type
+    const typeBatch = new Batch<RunType, PackageFile>();
     for (const [pkg, items] of watchBatch.flush()) {
       for (const item of items) {
-        eventBatch.add(item.event, item.file);
+        const type = addEvents.includes(item.event) ? 'copy' : 'remove';
+        typeBatch.add(type, item.file);
       }
-      for (const [event, files] of eventBatch.flush()) {
-        runQueue.enqueue({ package: pkg, event, files });
+      for (const [type, files] of typeBatch.flush()) {
+        // simplify paths to merge them with directory paths
+        const simplified = simplifyPaths(files.map(file => file.path));
+        const roots = files.filter(file => {
+          return simplified.map[file.path] === null;
+        });
+        runQueue.enqueue({ type, package: pkg, files: roots });
       }
     }
-  });
+    // need ms to properly simplyfy paths
+  }, 100);
 
   const watchQueue = new Queue<{ event: EventName; path: string }>({
     async handle(item) {
       // get package candidates based on path
-      const packages = manager.packages.filter(pkg => {
+      let packages = manager.packages.filter(pkg => {
         return pkg.isPathInPackage(item.path);
       });
-      const owner = await findPackageOwner(item.path, packages);
-      if (!owner) {
-        return;
+      // if updating directory, skip finding package owner
+      const isFile = !item.event.includes('Dir');
+      const owner = isFile
+        ? await findPackageOwner(item.path, packages)
+        : undefined;
+      if (owner) {
+        packages = [owner.package];
       }
-      watchBatch.add(owner.package, { event: item.event, file: owner.file });
+      for (const pkg of packages) {
+        const file = isFile
+          ? owner?.file
+          : { filePath: path.relative(pkg.path, item.path), path: item.path };
+        // if file does not exist even once, stop loop
+        if (!file) {
+          break;
+        }
+        watchBatch.add(pkg, { event: item.event, file });
+      }
       processBatch();
     }
   });

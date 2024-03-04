@@ -10,6 +10,8 @@ import { Timer } from '../utils/timer';
 import { Link } from './link';
 import { LnPkgOptions } from './lnpkg.types';
 
+export type RunType = 'copy' | 'remove';
+
 export interface RunnerOptions
   extends Pick<LnPkgOptions, 'cwd' | 'dryRun' | 'force' | 'skip'> {}
 
@@ -86,7 +88,7 @@ export class Runner {
   }
 
   async run(
-    type: 'copy' | 'remove',
+    type: RunType,
     options: { link: Link; files: PackageFile[]; prefix?: PrefixOptions }
   ): Promise<void> {
     const { dryRun, force, skip } = this.options;
