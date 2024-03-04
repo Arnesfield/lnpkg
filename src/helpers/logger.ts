@@ -22,6 +22,7 @@ export interface PrefixOptions {
   time?: boolean;
   error?: boolean;
   warn?: boolean;
+  notice?: boolean;
   dryRun?: boolean;
   message?: string;
   nth?: { index: number; total: number };
@@ -61,6 +62,9 @@ export class Logger {
     if (options.warn) {
       prefix.push(chalk.bgBlack.yellow('WARN'));
     }
+    if (options.notice) {
+      prefix.push(chalk.bgBlack.cyan('notice'));
+    }
     if (options.time) {
       prefix.push('[' + chalk.gray(formatTime(new Date())) + ']');
     }
@@ -90,21 +94,22 @@ export class Logger {
     type: 'log' | 'error',
     options: PrefixOptions,
     params: unknown[]
-  ): void {
+  ): this {
     if (type !== 'log') {
       this.stats[options.warn ? 'warnings' : 'errors']++;
     }
     const prefix = this.prefix(options);
     this.line = util.format(prefix, ...params);
     console[type](prefix, ...params);
+    return this;
   }
 
-  log(options: PrefixOptions, ...params: unknown[]): void {
-    this.print('log', options, params);
+  log(options: PrefixOptions, ...params: unknown[]): this {
+    return this.print('log', options, params);
   }
 
-  error(options: PrefixOptions, ...params: unknown[]): void {
-    this.print('error', options, params);
+  error(options: PrefixOptions, ...params: unknown[]): this {
+    return this.print('error', options, params);
   }
 
   clearPreviousLine(): void {
