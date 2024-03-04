@@ -39,10 +39,10 @@ export class Manager {
     const src = exists.src || new Package(entry.src);
     const dest = exists.dest || new Package(entry.dest);
     if (!exists.src) {
-      await src.init();
+      await src.init(true);
     }
     if (!exists.dest) {
-      await dest.init();
+      await dest.init(false);
     }
     await src.loadFiles();
     return this.save(new Link(src, dest));

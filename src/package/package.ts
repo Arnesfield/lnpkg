@@ -1,3 +1,4 @@
+import Arborist from '@npmcli/arborist';
 import { PackageJson } from '@npmcli/package-json';
 import { minimatch } from 'minimatch';
 import packlist from 'npm-packlist';
@@ -9,6 +10,7 @@ import { readPackage } from './read-package';
 import { validatePackagePath } from './validate-package-path';
 
 export class Package {
+  private node: Arborist.Node | undefined;
   private _json: PackageJson | undefined;
   private _files: PackageFile[] | undefined;
   private fileLookup: { [path: string]: PackageFile | undefined } = {};
@@ -24,10 +26,11 @@ export class Package {
    * The source `package.json`.
    */
   get json(): PackageJson {
-    if (!this._json) {
+    const json = this.node ? this.node.package : this._json;
+    if (!json) {
       throw new Error(`Package not initialized: ${this.path}`);
     }
-    return this._json;
+    return json;
   }
 
   /**
@@ -35,27 +38,48 @@ export class Package {
    */
   get files(): PackageFile[] {
     if (!this._files) {
-      const pkgName = this.json.name;
+      const pkgName = this.node?.package.name || '';
       const name = pkgName && pkgName + ' ';
       throw new Error('Package files not loaded: ' + name + this.path);
     }
     return this._files;
   }
 
-  async init(): Promise<void> {
-    // load package
+  getName(): string | undefined {
+    return this.node?.package.name ?? this._json?.name;
+  }
+
+  private loadNode() {
+    // need to create new Arborist instance every init
+    return new Arborist({ path: this.path }).loadActual();
+  }
+
+  private async loadPackage(loadNode: boolean) {
     const pkgJsonPath = await validatePackagePath(this.path);
-    const json = await readPackage(pkgJsonPath);
+    // load node not required unless it's a src package
+    const node = loadNode ? await this.loadNode() : undefined;
+    const json = loadNode ? undefined : await readPackage(pkgJsonPath);
+    return { node, json };
+  }
+
+  /**
+   * Initialize package.
+   * @param loadNode Load {@linkcode Arborist.Node} for source package.
+   */
+  async init(loadNode: boolean): Promise<void> {
+    const loaded = await this.loadPackage(loadNode);
     // make sure name does not change before saving changes
-    const previousName = this._json?.name;
-    const newName = json.name;
+    const previousName = this.node?.package.name ?? this._json?.name;
+    const newName = loaded.node?.package.name ?? loaded.json?.name;
     if (previousName && previousName !== newName) {
       throw new Error(
         `Package name changed from "${previousName}" to "${newName}". ` +
           'Requires a restart to apply directory changes.'
       );
     }
-    this._json = json;
+
+    this.node = loaded.node;
+    this._json = loaded.json;
     // also load files if they were available when refreshing
     if (this._files) {
       await this.loadFiles(true);
@@ -65,7 +89,10 @@ export class Package {
   async loadFiles(refresh = false): Promise<void> {
     if (refresh || !this._files) {
       // no need to update node when refreshing
-      const files = await packlist({ path: this.path });
+      const node = (this.node ||= await this.loadNode());
+      // take this opportunity to remove unused json
+      this._json = undefined;
+      const files = await packlist(node);
       this.fileLookup = {};
       this._files = files.map(filePath => {
         const file: PackageFile = {
