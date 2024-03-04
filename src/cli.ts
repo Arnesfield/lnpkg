@@ -1,3 +1,4 @@
+import { cliNotice } from './cli/cli-notice';
 import { createCommand } from './cli/command';
 import { parseOptions } from './cli/parse-options';
 import { lnpkg } from './core/lnpkg';
@@ -10,7 +11,9 @@ export async function cli(): Promise<void> {
     command.help();
   }
   try {
-    await lnpkg(await parseOptions(command.parse()));
+    const options = await parseOptions(command.parse());
+    await cliNotice();
+    await lnpkg(options);
   } catch (error) {
     console.error(errorLog(error));
     process.exitCode = 1;
