@@ -25,7 +25,7 @@ export interface SimplifiedPaths {
  * @returns The simplified paths result.
  */
 export function simplifyPaths(paths: string[]): SimplifiedPaths {
-  const map: SimplifiedPaths['map'] = {};
+  const map: SimplifiedPaths['map'] = Object.create(null);
   const sorted = paths.slice().sort();
   let previous = sorted[0];
   for (const value of sorted) {

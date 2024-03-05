@@ -11,9 +11,11 @@ export class Manager {
   readonly packages: Package[] = [];
   private readonly linkLookup: {
     [src: string]: { [dest: string]: Link | undefined } | undefined;
-  } = {};
-  private readonly packageMap: { [path: string]: Package | undefined } = {};
-  private readonly nameCount: { [name: string]: number | undefined } = {};
+  } = Object.create(null);
+  private readonly packageMap: { [path: string]: Package | undefined } =
+    Object.create(null);
+  private readonly nameCount: { [name: string]: number | undefined } =
+    Object.create(null);
 
   getPackage(path: string): Package | undefined {
     return this.packageMap[path];
@@ -26,9 +28,12 @@ export class Manager {
     };
   }
 
+  private getSrcMap(path: string) {
+    return (this.linkLookup[path] ||= Object.create(null));
+  }
+
   get(entry: Entry): Link | undefined {
-    const srcMap = (this.linkLookup[entry.src] ||= {});
-    return srcMap[entry.dest];
+    return this.getSrcMap(entry.src)[entry.dest];
   }
 
   async create(entry: Entry): Promise<Link> {
@@ -70,8 +75,7 @@ export class Manager {
     // save to map and lookup
     this.savePackage(link.src);
     this.savePackage(link.dest);
-    const srcMap = (this.linkLookup[link.src.path] ||= {});
-    srcMap[link.dest.path] = link;
+    this.getSrcMap(link.src.path)[link.dest.path] = link;
     this.links.push(link);
     return link;
   }

@@ -1,7 +1,7 @@
 import prettyMilliseconds from 'pretty-ms';
 
 export class Timer {
-  private readonly timeMap: { [key: string]: number } = {};
+  private readonly timeMap: { [key: string]: number } = Object.create(null);
 
   start(key: string): number {
     return (this.timeMap[key] = performance.now());

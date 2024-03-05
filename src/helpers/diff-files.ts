@@ -9,8 +9,8 @@ export interface DiffFilesResult {
 export function diffFiles(a: PackageFile[], b: PackageFile[]): DiffFilesResult {
   const retained: PackageFile[] = [];
   const added: PackageFile[] = [];
-  const files: { [path: string]: PackageFile } = {};
-  const checked: { [path: string]: boolean } = {};
+  const files: { [path: string]: PackageFile } = Object.create(null);
+  const checked: { [path: string]: boolean } = Object.create(null);
   for (const file of a) {
     files[file.path] = file;
   }

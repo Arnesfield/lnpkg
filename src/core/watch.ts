@@ -21,7 +21,8 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
   }>(async item => {
     const prefix: PrefixOptions = { time: true };
     // reinitialize only once for package.json changes
-    const cachedInit: { [path: string]: PackageFile[] | undefined } = {};
+    const cacheMap: { [path: string]: PackageFile[] | undefined } =
+      Object.create(null);
     // find all links with this source package
     for (const link of manager.links) {
       if (link.src !== item.package) {
@@ -38,20 +39,20 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
       }
 
       // for package.json changes, unlink existing files and reinit
-      if (!cachedInit[link.src.path]) {
+      if (!cacheMap[link.src.path]) {
         // remove package.json to include it in refresh copy
         const files = link.src.files.slice();
         const index = link.src.indexOf('package.json');
         if (index > -1) {
           files.splice(index, 1);
         }
-        cachedInit[link.src.path] = files;
+        cacheMap[link.src.path] = files;
         // reinit after caching files to refresh
         await runner.reinit({ link, prefix });
       }
       if (runner.checkLink(link, prefix)) {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const files = cachedInit[link.src.path]!;
+        const files = cacheMap[link.src.path]!;
         await runner.refresh({ link, prefix, files });
       }
     }

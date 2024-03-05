@@ -12,7 +12,8 @@ export class Package {
   private _node: Arborist.Node | undefined;
   private _files: PackageFile[] | undefined;
   private _displayName: string | undefined;
-  private fileLookup: { [path: string]: PackageFile | undefined } = {};
+  private fileLookup: { [path: string]: PackageFile | undefined } =
+    Object.create(null);
 
   constructor(
     /**
@@ -80,7 +81,7 @@ export class Package {
     if (refresh || !this._files) {
       // no need to update node when refreshing
       const files = await packlist(this.node);
-      this.fileLookup = {};
+      this.fileLookup = Object.create(null);
       this._files = files.map(filePath => {
         const file: PackageFile = {
           filePath,
