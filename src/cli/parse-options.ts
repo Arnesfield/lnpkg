@@ -13,6 +13,8 @@ export async function parseOptions(command: Command): Promise<LnPkgOptions> {
     dest: _dest,
     dests: _dests,
     link = [],
+    // NOTE: unlink can never be overriden!
+    unlink = false,
     ...opts
   } = command.opts<ProgramOptions>();
   // make sure inputs have sources
@@ -33,7 +35,10 @@ export async function parseOptions(command: Command): Promise<LnPkgOptions> {
   const scopedOptions = scopeOptions(resolvedOptions);
   // merge options, prioritize cli options
   const input = command.processedArgs[0].concat(link);
-  const options = mergeOptions({ ...opts, input, dest }, ...scopedOptions);
+  const options = mergeOptions(
+    { ...opts, input, dest, unlink },
+    ...scopedOptions
+  );
   // default to current directory
   if (!options.dest || options.dest.length === 0) {
     options.dest = ['.'];

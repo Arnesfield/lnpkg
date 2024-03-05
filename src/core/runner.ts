@@ -95,7 +95,7 @@ export class Runner {
       return;
     }
 
-    const count = { done: 0, error: 0 };
+    const count = { done: 0, error: 0, skip: 0 };
     // handle tty for progress loader
     const { isTTY } = process.stdout;
     // no need to clear timer
@@ -106,11 +106,14 @@ export class Runner {
         ? (['green', '+copied'] as const)
         : (['red', '-removed'] as const);
     const displayType = chalk.bgBlack[color](label);
+    // keep total outside in case files.length changes
+    const total = files.length;
     const logs = () => {
       return ([] as (string | number)[]).concat(
         displayType,
-        `${count.done}/${files.length}`,
-        count.error > 0 ? [chalk.bgBlack.red('-error'), count.error] : [],
+        `${count.done}/${total}`,
+        count.skip > 0 ? [chalk.bgBlack.magenta('-skip'), count.skip + ''] : [],
+        count.error > 0 ? [chalk.bgBlack.red('-error'), count.error + ''] : [],
         chalk.yellow(timer.diff('file', true))
       );
     };
@@ -124,16 +127,17 @@ export class Runner {
       try {
         if (dryRun) {
           // do nothing
+          count.done++;
         } else if (type === 'copy') {
           await cp(file.path, destFilePath);
+          count.done++;
           // unlike removeFile, adding file probably doesn't do anything
           // since files are refreshed almost always before run
         } else if (type === 'remove') {
-          // ignore cases where rm does not succeed (e.g. file already removed)
-          await rm(destFilePath);
+          const kind = (await rm(destFilePath)) ? 'done' : 'skip';
+          count[kind]++;
           link.src.removeFile(file.filePath);
         }
-        count.done++;
       } catch (error) {
         count.error++;
         if (isTTY) {

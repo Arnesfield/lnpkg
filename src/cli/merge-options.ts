@@ -14,6 +14,8 @@ export function mergeOptions(
     opts.dryRun ??= options.dryRun;
     opts.force ??= options.force;
     opts.skip ??= options.skip;
+    // NOTE: make sure unlink is not overriden!
+    opts.unlink ??= options.unlink;
     opts.watch ??= options.watch;
     opts.watchOnly ??= options.watchOnly;
     opts.dest.push(...ensureArray(options.dest));

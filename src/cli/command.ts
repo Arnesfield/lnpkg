@@ -16,6 +16,7 @@ export interface ProgramOptions {
   dryRun?: boolean;
   force?: boolean;
   skip?: boolean;
+  unlink?: boolean;
   watch?: boolean;
   watchOnly?: boolean;
 }
@@ -28,7 +29,7 @@ function createArrayParser(defaultValue: string[] = []) {
 }
 
 export function createCommand(): Command {
-  // NOTE: '--link' option may break if commander changes how it parses options
+  // NOTE: some options may break if commander changes how it parses options
   let input: ProgramInput = { src: [], dest: [] };
   let saved = false;
 
@@ -99,14 +100,20 @@ export function createCommand(): Command {
     .addOption(
       new Option(
         '-f, --force',
-        'allow link even if source package is not a dependency of destination package'
+        'allow un/link even if source package is not a dependency of destination package'
       ).implies({ skip: false })
     )
     .addOption(
       new Option(
         '-s, --skip',
-        'skip link if source package is not a dependency of destination package'
+        'skip un/link if source package is not a dependency of destination package'
       ).implies({ force: false })
+    )
+    .addOption(
+      new Option(
+        '-u, --unlink',
+        'unlink source packages from destination packages, watch mode is disabled'
+      ).implies({ watch: false, watchOnly: false })
     )
     .addOption(
       new Option(

@@ -26,8 +26,9 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
   const manager = new Manager();
   const runner = new Runner(logger, options);
   const timer = new Timer();
-  const { watchOnly } = options;
+  const { unlink, watchOnly } = options;
 
+  const type = unlink ? 'remove' : 'copy';
   const message = () => chalk.yellow(timer.diff('entry'));
   timer.start('main');
   for (const entry of entries) {
@@ -43,8 +44,11 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
       logger.error({ error: true }, errorLog(error), message());
       continue;
     }
-    if (runner.checkLink(link, { message: message() }) && !watchOnly) {
-      await runner.run('copy', { link, files: link.src.files });
+    if (
+      runner.checkLink(link, { message: message() }) &&
+      (unlink || !watchOnly)
+    ) {
+      await runner.run(type, { link, files: link.src.files });
     }
   }
 
@@ -75,7 +79,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
   );
 
   // watch only if links are available
-  if (manager.links.length > 0 && (options.watch || watchOnly)) {
+  if (manager.links.length > 0 && !unlink && (options.watch || watchOnly)) {
     watcher = watch(manager, runner);
     logger.log({ app: true }, 'Watching for package file changes.');
   }

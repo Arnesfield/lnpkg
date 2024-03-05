@@ -48,6 +48,12 @@ export interface LnPkgOptions {
    */
   skip?: boolean;
   /**
+   * Unlink source packages from destination packages.
+   *
+   * Watch mode is disabled.
+   */
+  unlink?: boolean;
+  /**
    * Watch package files for changes after linking packages.
    */
   watch?: boolean;

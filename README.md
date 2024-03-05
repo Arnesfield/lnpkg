@@ -58,10 +58,12 @@ Options:
                          the current working directory
   -c, --config <path>    file path to config(s) or '-' for stdin (json format)
       --configs <...>    similar to '--config' but accepts multiple file paths
-  -f, --force            allow link even if source package is not a dependency
-                         of destination package
-  -s, --skip             skip link if source package is not a dependency of
+  -f, --force            allow un/link even if source package is not a
+                         dependency of destination package
+  -s, --skip             skip un/link if source package is not a dependency of
                          destination package
+  -u, --unlink           unlink source packages from destination packages,
+                         watch mode is disabled
   -w, --watch            watch package files for changes after linking packages
   -W, --watch-only       skip linking packages and watch package files for
                          changes only
