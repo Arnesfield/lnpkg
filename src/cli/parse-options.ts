@@ -15,6 +15,10 @@ export async function parseOptions(command: Command): Promise<LnPkgOptions> {
     link = [],
     ...opts
   } = command.opts<ProgramOptions>();
+  // remove preparsed options
+  delete opts.help;
+  delete opts.appFullInstall;
+  delete opts.appUpdate;
   // make sure inputs have sources
   for (const input of link) {
     if (input.dest.length === 0) {

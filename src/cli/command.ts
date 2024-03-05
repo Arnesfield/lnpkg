@@ -18,6 +18,9 @@ export interface ProgramOptions {
   skip?: boolean;
   watch?: boolean;
   watchOnly?: boolean;
+  help?: boolean;
+  appFullInstall?: boolean;
+  appUpdate?: boolean;
 }
 
 // keep array reference
@@ -48,6 +51,7 @@ export function createCommand(): Command {
 
   const command = new Command()
     .name(name)
+    .helpOption(false) // customize help option
     .addHelpText('before', description + '\n')
     .argument('[paths...]', 'paths of source packages to link')
     .option('-n, --dry-run', 'log only without performing operations (noop)')
@@ -120,7 +124,10 @@ export function createCommand(): Command {
         'skip linking packages and watch package files for changes only'
       ).implies({ watch: false })
     )
-    .version(`v${version}`, '-v, --version');
+    .version(`v${version}`, '-v, --version')
+    .option('-h, --help', 'display help for command')
+    .addOption(new Option('--app-full-install').hideHelp())
+    .addOption(new Option('--app-update').hideHelp());
   // add hidden `--no` option for boolean options
   // NOTE: taken from https://github.com/tj/commander.js/issues/1343#issuecomment-699546401
   const match = /^--/;

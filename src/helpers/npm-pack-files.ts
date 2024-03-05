@@ -23,9 +23,7 @@ export async function npmPackFiles(options: NpmPackOptions): Promise<string[]> {
   pack.stdout.setEncoding('utf8').on('data', chunk => chunks.push(chunk));
 
   const promise = new Promise<string>((resolve, reject) => {
-    pack
-      .on('error', error => reject(error))
-      .on('close', () => resolve(chunks.join('')));
+    pack.on('error', reject).on('close', () => resolve(chunks.join('')));
   });
 
   try {
