@@ -24,7 +24,6 @@ export interface PrefixOptions {
   warn?: boolean;
   dryRun?: boolean;
   message?: string;
-  nth?: { index: number; total: number };
 }
 
 export class Logger {
@@ -47,7 +46,7 @@ export class Logger {
   }
 
   prefix(options: PrefixOptions): string {
-    const { nth, link, pkg, message } = options;
+    const { link, pkg, message } = options;
     const prefix: string[] = [];
     if (options.app) {
       prefix.push(chalk.bgBlack(name));
@@ -63,9 +62,6 @@ export class Logger {
     }
     if (options.time) {
       prefix.push('[' + chalk.gray(formatTime(new Date())) + ']');
-    }
-    if (nth) {
-      prefix.push('[' + chalk.gray(nth.index + 1 + '/' + nth.total) + ']');
     }
 
     const pkgLog: string[] = [];

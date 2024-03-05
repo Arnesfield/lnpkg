@@ -25,10 +25,7 @@ export class Runner {
     this.cwd = cwd(options.cwd);
   }
 
-  checkLink(
-    link: Link,
-    options?: Pick<PrefixOptions, 'nth' | 'time' | 'message'>
-  ): boolean {
+  checkLink(link: Link, prefix?: PrefixOptions): boolean {
     const { force, skip } = this.options;
     const pathLink = this.logger.getPathLink({
       cwd: this.cwd,
@@ -38,11 +35,11 @@ export class Runner {
     const isDependency = link.isDependency();
     if (isDependency) {
       const message = ['%s %s %s'];
-      if (options?.message) {
-        message.push(options.message);
+      if (prefix?.message) {
+        message.push(prefix.message);
       }
       this.logger.log(
-        { ...options, link, message: message.join(' ') },
+        { ...prefix, link, message: message.join(' ') },
         ...pathLink
       );
     } else if (!skip) {
@@ -57,13 +54,13 @@ export class Runner {
         params.push(chalk.bold('--force'));
       }
       message.push('%s %s %s');
-      if (options?.message) {
-        message.push(options.message);
+      if (prefix?.message) {
+        message.push(prefix.message);
       }
 
       this.logger.error(
         {
-          ...options,
+          ...prefix,
           link,
           error: !force,
           warn: force,

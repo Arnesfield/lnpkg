@@ -19,11 +19,11 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
     package: Package;
     files: PackageFile[];
   }>({
-    async handle(item, index, total) {
+    async handle(item) {
       if (item.files.length === 0) {
         return;
       }
-      const prefix: PrefixOptions = { time: true, nth: { index, total } };
+      const prefix: PrefixOptions = { time: true };
       // reinitialize only once for package.json changes
       const cachedInit: { [path: string]: PackageFile[] | undefined } = {};
       // find all links with this source package
