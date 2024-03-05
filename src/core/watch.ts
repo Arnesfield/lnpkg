@@ -17,47 +17,42 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
   const runQueue = new Queue<{
     type: RunType;
     package: Package;
-    files: PackageFile[];
-  }>({
-    async handle(item) {
-      if (item.files.length === 0) {
-        return;
+    files: PackageFile[]; // assume files has length
+  }>(async item => {
+    const prefix: PrefixOptions = { time: true };
+    // reinitialize only once for package.json changes
+    const cachedInit: { [path: string]: PackageFile[] | undefined } = {};
+    // find all links with this source package
+    for (const link of manager.links) {
+      if (link.src !== item.package) {
+        continue;
       }
-      const prefix: PrefixOptions = { time: true };
-      // reinitialize only once for package.json changes
-      const cachedInit: { [path: string]: PackageFile[] | undefined } = {};
-      // find all links with this source package
-      for (const link of manager.links) {
-        if (link.src !== item.package) {
-          continue;
-        }
-        // reinit if updating package.json
-        // NOTE: currently no handler when removing package.json
-        if (
-          item.type === 'remove' ||
-          !item.files.some(file => file.filePath === 'package.json')
-        ) {
-          await runner.run(item.type, { link, files: item.files, prefix });
-          continue;
-        }
+      // reinit if updating package.json
+      // NOTE: currently no handler when removing package.json
+      if (
+        item.type === 'remove' ||
+        !item.files.some(file => file.filePath === 'package.json')
+      ) {
+        await runner.run(item.type, { link, files: item.files, prefix });
+        continue;
+      }
 
-        // for package.json changes, unlink existing files and reinit
-        if (!cachedInit[link.src.path]) {
-          // remove package.json to include it in refresh copy
-          const files = link.src.files.slice();
-          const index = link.src.indexOf('package.json');
-          if (index > -1) {
-            files.splice(index, 1);
-          }
-          cachedInit[link.src.path] = files;
-          // reinit after caching files to refresh
-          await runner.reinit({ link, prefix });
+      // for package.json changes, unlink existing files and reinit
+      if (!cachedInit[link.src.path]) {
+        // remove package.json to include it in refresh copy
+        const files = link.src.files.slice();
+        const index = link.src.indexOf('package.json');
+        if (index > -1) {
+          files.splice(index, 1);
         }
-        if (runner.checkLink(link, prefix)) {
-          // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-          const files = cachedInit[link.src.path]!;
-          await runner.refresh({ link, prefix, files });
-        }
+        cachedInit[link.src.path] = files;
+        // reinit after caching files to refresh
+        await runner.reinit({ link, prefix });
+      }
+      if (runner.checkLink(link, prefix)) {
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const files = cachedInit[link.src.path]!;
+        await runner.refresh({ link, prefix, files });
       }
     }
   });
@@ -80,17 +75,18 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
       for (const [type, files] of typeBatch.flush()) {
         // simplify paths to merge them with directory paths
         const simplified = simplifyPaths(files.map(file => file.path));
-        const roots = files.filter(file => {
-          return simplified.map[file.path] === null;
-        });
-        runQueue.enqueue({ type, package: pkg, files: roots });
+        const roots = files.filter(file => simplified.map[file.path] === null);
+        if (roots.length === 0) {
+          continue;
+        }
+        runQueue.add({ type, package: pkg, files: roots });
       }
     }
     // need ms to properly simplyfy paths
   }, 100);
 
-  const watchQueue = new Queue<{ event: EventName; path: string }>({
-    async handle(item) {
+  const watchQueue = new Queue<{ event: EventName; path: string }>(
+    async item => {
       // get package candidates based on path
       let packages = manager.packages.filter(pkg => {
         return pkg.isPathInPackage(item.path);
@@ -115,10 +111,10 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
       }
       processBatch();
     }
-  });
+  );
 
   return chokidarWatch(
     manager.links.map(link => link.src.path),
     { ignoreInitial: true }
-  ).on('all', (event, path) => watchQueue.enqueue({ event, path }));
+  ).on('all', (event, path) => watchQueue.add({ event, path }));
 }

@@ -1,40 +1,20 @@
-export interface QueueOptions<T> {
-  delay?: number;
-  normalize?(items: T[]): T[];
-  handle(item: T, index: number, total: number): void | Promise<void>;
-}
-
 export class Queue<T> {
   private readonly items: T[] = [];
   private collection: T[] | null = null;
 
-  constructor(protected readonly options: QueueOptions<T>) {}
+  constructor(protected readonly handler: (item: T) => void | Promise<void>) {}
 
-  enqueue(...items: T[]): void {
+  add(...items: T[]): void {
     const exists = !!this.collection;
-    if (!this.collection) {
-      this.collection = [];
-    }
-    this.collection.push(...items);
+    (this.collection ||= []).push(...items);
     if (exists) {
       return;
     }
-    const save = () => {
-      if (!this.collection) {
-        return;
-      }
-      const items =
-        typeof this.options.normalize === 'function'
-          ? this.options.normalize(this.collection)
-          : this.collection;
+    const collection = this.collection;
+    if (collection) {
       // clear to make way for next collection
       this.collection = null;
-      this.run(items);
-    };
-    if (typeof this.options.delay === 'number') {
-      setTimeout(save, this.options.delay);
-    } else {
-      save();
+      this.run(collection);
     }
   }
 
@@ -44,12 +24,11 @@ export class Queue<T> {
     if (isRunning) {
       return;
     }
-    let index = -1;
     for (const item of this.items) {
       // NOTE: assume error handling in callback
-      await this.options.handle(item, ++index, this.items.length);
+      await this.handler(item);
     }
-    // clear collections
+    // clear items after processing
     this.items.length = 0;
   }
 }
