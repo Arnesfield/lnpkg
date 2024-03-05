@@ -51,9 +51,12 @@ export class Package {
 
   private async loadNode() {
     const node = await loadNode(this.path);
+    const newName = node.package.name;
+    if (!newName) {
+      throw new Error(`Package name is required: ${this.path}/package.json`);
+    }
     // make sure name does not change before saving changes
     const previousName = this._node?.package.name;
-    const newName = node.package.name;
     if (this._node && previousName !== newName) {
       throw new Error(
         `Package name changed from "${previousName}" to "${newName}". ` +
