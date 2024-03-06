@@ -46,7 +46,6 @@ export class Manager {
     if (!exists.dest) {
       await dest.init();
     }
-    await src.loadFiles();
     return this.save(new Link(entry.options, src, dest));
   }
 

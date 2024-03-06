@@ -46,7 +46,7 @@ export function watch(
       // for package.json changes, unlink existing files and reinit
       if (!cacheMap[link.src.path]) {
         // remove package.json to include it in refresh copy
-        const files = link.src.files.slice();
+        const files = (await link.src.files()).slice();
         const index = link.src.indexOf('package.json');
         if (index > -1) {
           files.splice(index, 1);

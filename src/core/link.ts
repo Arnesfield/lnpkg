@@ -1,6 +1,7 @@
 import path from 'path';
 import { hasDependency } from '../package/has-dependency';
 import { Package } from '../package/package';
+import { PackageFile } from '../package/package.types';
 import { ScopedOptions } from './lnpkg.types';
 
 export class Link {
@@ -27,6 +28,14 @@ export class Link {
     return typeof name === 'string' && hasDependency(this.dest.json, name);
   }
 
-  // TODO: linking src -> dest === src files
-  // TODO: unlinking src -> dest === src files from dest
+  async getSrcFilesFromDest(): Promise<PackageFile[]> {
+    // it's fine if package does not load properly (e.g. not exists yet)
+    const pkg = new Package(this.getDestPath());
+    try {
+      await pkg.init();
+      return await pkg.files();
+    } catch {
+      return [];
+    }
+  }
 }

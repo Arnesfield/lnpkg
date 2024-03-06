@@ -76,7 +76,7 @@ export class Runner {
     files: PackageFile[]; // previous files
     prefix?: PrefixOptions;
   }): Promise<void> {
-    const diff = diffFiles(options.files, options.link.src.files);
+    const diff = diffFiles(options.files, await options.link.src.files());
     await this.run('remove', { ...options, files: diff.removed });
     await this.run('copy', { ...options, files: diff.added });
   }
@@ -134,7 +134,6 @@ export class Runner {
         } else if (type === 'remove') {
           const kind = (await rm(destFilePath)) ? 'done' : 'skip';
           count[kind]++;
-          link.src.removeFile(file.filePath);
         }
       } catch (error) {
         count.error++;

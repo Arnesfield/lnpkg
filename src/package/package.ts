@@ -41,15 +41,6 @@ export class Package {
     return this.node.package;
   }
 
-  get files(): PackageFile[] {
-    if (!this._files) {
-      const pkgName = this._node?.package.name || '';
-      const name = pkgName && pkgName + ' ';
-      throw new Error('Package files not loaded: ' + name + this.path);
-    }
-    return this._files;
-  }
-
   private async loadNode() {
     const node = await loadNode(this.path);
     const newName = node.package.name;
@@ -73,11 +64,11 @@ export class Package {
     this._node = await this.loadNode();
     // also load files if they were available when refreshing
     if (this._files) {
-      await this.loadFiles(true);
+      await this.files(true);
     }
   }
 
-  async loadFiles(refresh = false): Promise<void> {
+  async files(refresh = false): Promise<PackageFile[]> {
     if (refresh || !this._files) {
       // no need to update node when refreshing
       const files = await packlist(this.node);
@@ -91,6 +82,7 @@ export class Package {
         return file;
       });
     }
+    return this._files;
   }
 
   indexOf(filePath: string): number {
@@ -106,21 +98,10 @@ export class Package {
     let file = this.fileLookup[filePath];
     if (!file) {
       // if no match, reload package files
-      await this.loadFiles(true);
+      await this.files(true);
       file = this.fileLookup[filePath];
     }
     return file;
-  }
-
-  removeFile(filePath: string): void {
-    filePath = absolute(filePath, this.path);
-    const index = this.indexOf(filePath);
-    if (index > -1) {
-      // retain reference to current files
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-      this._files!.splice(index, 1);
-    }
-    delete this.fileLookup[filePath];
   }
 
   isPathInPackage(filePath: string): boolean {

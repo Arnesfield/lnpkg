@@ -45,12 +45,14 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
       logger.error({ error: true }, errorLog(error), message());
       continue;
     }
-    const { options } = link;
-    if (runner.checkLink(link, { message: message() }) && !options.watchOnly) {
-      await runner.run(options.unlink ? 'remove' : 'copy', {
-        link,
-        files: link.src.files
-      });
+    const { unlink, watchOnly } = link.options;
+    if (runner.checkLink(link, { message: message() }) && !watchOnly) {
+      // linking src -> dest === copy src files to dest
+      // unlinking src -> dest === remove src files from dest
+      const files = await (unlink
+        ? link.getSrcFilesFromDest()
+        : link.src.files());
+      await runner.run(unlink ? 'remove' : 'copy', { link, files });
     }
   }
 
