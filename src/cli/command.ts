@@ -35,15 +35,15 @@ export function createCommand(): Command {
 
   const parseDest = createArrayParser();
   const destsOption = new Option(
-    '    --dests <...>',
-    "similar to '--dest' but accepts multiple paths"
+    '-d, --dests <...>',
+    'default destination package(s) to link source packages to'
   ).argParser(parseDest);
   destsOption.variadic = true;
 
   const parseConfig = createArrayParser();
   const configsOption = new Option(
-    '    --configs <...>',
-    "similar to '--config' but accepts multiple file paths"
+    '-c, --configs <...>',
+    "file path to config(s) or '-' for stdin (json format)"
   ).argParser(parseConfig);
   configsOption.variadic = true;
 
@@ -52,12 +52,12 @@ export function createCommand(): Command {
     .addHelpText('before', description + '\n')
     .argument('[paths...]', 'paths of source packages to link')
     .option('-n, --dry-run', 'log only without performing operations (noop)')
+    .addOption(destsOption)
     .option(
-      '-d, --dest <path>',
-      'default destination package(s) to link source packages to',
+      '    --dest <path>',
+      "similar to '--dests' but accepts one value at a time",
       parseDest
     )
-    .addOption(destsOption)
     .option<ProgramInput[]>(
       '-l, --link <paths...>',
       "source packages to link to proceeding '--to' destination packages",
@@ -90,12 +90,12 @@ export function createCommand(): Command {
       '-C, --cwd <path>',
       'run command as if it was started in <path> instead of the current working directory'
     )
+    .addOption(configsOption)
     .option(
-      '-c, --config <path>',
-      "file path to config(s) or '-' for stdin (json format)",
+      '    --config <path>',
+      "similar to '--configs' but accepts one value at a time",
       parseConfig
     )
-    .addOption(configsOption)
     // use implies for toggling to properly override config options
     .addOption(
       new Option(

@@ -47,17 +47,17 @@ Arguments:
 
 Options:
   -n, --dry-run          log only without performing operations (noop)
-  -d, --dest <path>      default destination package(s) to link source packages
+  -d, --dests <...>      default destination package(s) to link source packages
                          to
-      --dests <...>      similar to '--dest' but accepts multiple paths
+      --dest <path>      similar to '--dests' but accepts one value at a time
   -l, --link <paths...>  source packages to link to proceeding '--to'
                          destination packages
   -t, --to <paths...>    destination packages for preceding '--link' source
                          packages
   -C, --cwd <path>       run command as if it was started in <path> instead of
                          the current working directory
-  -c, --config <path>    file path to config(s) or '-' for stdin (json format)
-      --configs <...>    similar to '--config' but accepts multiple file paths
+  -c, --configs <...>    file path to config(s) or '-' for stdin (json format)
+      --config <path>    similar to '--configs' but accepts one value at a time
   -f, --force            allow un/link even if source package is not a
                          dependency of destination package
   -s, --skip             skip un/link if source package is not a dependency of
