@@ -48,6 +48,9 @@ export class Logger {
   prefix(options: PrefixOptions): string {
     const { link, pkg, message } = options;
     const prefix: string[] = [];
+    if (options.time) {
+      prefix.push('[' + chalk.gray(formatTime(new Date())) + ']');
+    }
     if (options.app) {
       prefix.push(chalk.bgBlack(name));
     }
@@ -59,9 +62,6 @@ export class Logger {
     }
     if (options.warn) {
       prefix.push(chalk.bgBlack.yellow('WARN'));
-    }
-    if (options.time) {
-      prefix.push('[' + chalk.gray(formatTime(new Date())) + ']');
     }
 
     const pkgLog: string[] = [];
