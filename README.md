@@ -62,8 +62,9 @@ Options:
                          dependency of destination package
   -s, --skip             skip un/link if source package is not a dependency of
                          destination package
-  -u, --unlink           unlink source packages from destination packages,
-                         watch mode is disabled
+  -u, --unlink           unlink source packages from destination packages
+                         (package files only) and skip linking them in watch
+                         mode
   -w, --watch            watch package files for changes after linking packages
   -W, --watch-only       skip linking packages and watch package files for
                          changes only

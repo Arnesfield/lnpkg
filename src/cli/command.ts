@@ -112,7 +112,8 @@ export function createCommand(): Command {
     .addOption(
       new Option(
         '-u, --unlink',
-        'unlink source packages from destination packages, watch mode is disabled'
+        'unlink source packages from destination packages ' +
+          '(package files only) and skip linking them in watch mode'
       ).implies({ watch: false, watchOnly: false })
     )
     .addOption(
