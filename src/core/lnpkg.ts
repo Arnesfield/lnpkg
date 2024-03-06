@@ -3,6 +3,7 @@ import { FSWatcher } from 'chokidar';
 import { getEntries } from '../helpers/get-entries';
 import { Logger } from '../helpers/logger';
 import { scopeOptions } from '../helpers/scope-options';
+import { ensureArray } from '../utils/ensure-array';
 import { errorLog } from '../utils/error';
 import { pluralize } from '../utils/pluralize';
 import { Timer } from '../utils/timer';
@@ -18,6 +19,12 @@ import { watch } from './watch';
  * @returns The LnPkg object.
  */
 export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
+  options = { ...options };
+  // default to current directory
+  options.dest = ensureArray(options.dest);
+  if (options.dest.length === 0) {
+    options.dest.push('.');
+  }
   // run scopeOptions a second time (for cli)
   // then main options into inputs
   const entries = await getEntries(scopeOptions(options));

@@ -1,7 +1,6 @@
 import { Command } from 'commander';
 import { Input, LnPkgOptions } from '../core/lnpkg.types';
 import { scopeOptions } from '../helpers/scope-options';
-import { ensureArray } from '../utils/ensure-array';
 import { cwd } from '../utils/path.utils';
 import { ProgramOptions } from './command';
 import { resolveConfigs } from './resolve-config';
@@ -35,10 +34,5 @@ export async function parseOptions(command: Command): Promise<LnPkgOptions> {
     // scope and merge inputs (options -> inputs)
     input.push(...scopeOptions(opts));
   }
-  // default to current directory
-  const dest = ensureArray(_dest || _dests);
-  if (dest.length === 0) {
-    dest.push('.');
-  }
-  return { ...opts, input, dest };
+  return { ...opts, input, dest: _dest || _dests };
 }
