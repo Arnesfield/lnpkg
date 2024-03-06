@@ -1,10 +1,6 @@
 import { Package } from '../package/package';
+import { Entry } from '../types/common.types';
 import { Link } from './link';
-
-export interface Entry {
-  src: string;
-  dest: string;
-}
 
 export class Manager {
   readonly links: Link[] = [];
@@ -51,7 +47,7 @@ export class Manager {
       await dest.init();
     }
     await src.loadFiles();
-    return this.save(new Link(src, dest));
+    return this.save(new Link(entry.options, src, dest));
   }
 
   private savePackage(pkg: Package) {

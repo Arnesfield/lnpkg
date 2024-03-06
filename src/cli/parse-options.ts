@@ -1,10 +1,10 @@
 import { Command } from 'commander';
-import { LnPkgOptions } from '../core/lnpkg.types';
+import { Input, LnPkgOptions } from '../core/lnpkg.types';
+import { scopeOptions } from '../helpers/scope-options';
+import { ensureArray } from '../utils/ensure-array';
 import { cwd } from '../utils/path.utils';
 import { ProgramOptions } from './command';
-import { mergeOptions } from './merge-options';
 import { resolveConfigs } from './resolve-config';
-import { scopeOptions } from './scope-options';
 
 export async function parseOptions(command: Command): Promise<LnPkgOptions> {
   const {
@@ -13,8 +13,6 @@ export async function parseOptions(command: Command): Promise<LnPkgOptions> {
     dest: _dest,
     dests: _dests,
     link = [],
-    // NOTE: unlink can never be overriden!
-    unlink = false,
     ...opts
   } = command.opts<ProgramOptions>();
   // make sure inputs have sources
@@ -26,22 +24,21 @@ export async function parseOptions(command: Command): Promise<LnPkgOptions> {
     }
   }
   // handle same reference from different option names
-  const dest = _dest || _dests;
   const config = _config || _configs;
   // properly resolve and scope options
   // parse json config, use provided cwd to resolve config path
   const configs = Array.isArray(config) ? Array.from(new Set(config)) : [];
   const resolvedOptions = await resolveConfigs(cwd(opts.cwd), configs);
-  const scopedOptions = scopeOptions(resolvedOptions);
-  // merge options, prioritize cli options
-  const input = command.processedArgs[0].concat(link);
-  const options = mergeOptions(
-    { ...opts, input, dest, unlink },
-    ...scopedOptions
-  );
-  // default to current directory
-  if (!options.dest || options.dest.length === 0) {
-    options.dest = ['.'];
+  // cli options take priority, everything else (configs) should get scoped
+  const input = (command.args as (string | Input)[]).concat(link);
+  for (const opts of resolvedOptions) {
+    // scope and merge inputs (options -> inputs)
+    input.push(...scopeOptions(opts));
   }
-  return options;
+  // default to current directory
+  const dest = ensureArray(_dest || _dests);
+  if (dest.length === 0) {
+    dest.push('.');
+  }
+  return { ...opts, input, dest };
 }

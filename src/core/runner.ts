@@ -8,27 +8,25 @@ import { cp, rm } from '../utils/fs.utils';
 import { cwd } from '../utils/path.utils';
 import { Timer } from '../utils/timer';
 import { Link } from './link';
-import { LnPkgOptions } from './lnpkg.types';
+import { ScopedOptions } from './lnpkg.types';
 
 export type RunType = 'copy' | 'remove';
 
-export interface RunnerOptions
-  extends Pick<LnPkgOptions, 'cwd' | 'dryRun' | 'force' | 'skip'> {}
+export interface RunnerCommonOptions {
+  options: ScopedOptions;
+  prefix?: PrefixOptions;
+}
 
 export class Runner {
-  private readonly cwd: string;
-
   constructor(
     private readonly logger: Logger,
-    private readonly options: RunnerOptions
-  ) {
-    this.cwd = cwd(options.cwd);
-  }
+    private readonly options: { dryRun?: boolean }
+  ) {}
 
   checkLink(link: Link, prefix?: PrefixOptions): boolean {
-    const { force, skip } = this.options;
+    const { force, skip } = link.options;
     const pathLink = this.logger.getPathLink({
-      cwd: this.cwd,
+      cwd: cwd(link.options.cwd),
       source: link.src.path,
       target: link.getDestPath()
     });
@@ -78,28 +76,27 @@ export class Runner {
     files: PackageFile[]; // previous files
     prefix?: PrefixOptions;
   }): Promise<void> {
-    const { link, files, prefix } = options;
-    const diff = diffFiles(files, link.src.files);
-    await this.run('remove', { link, prefix, files: diff.removed });
-    await this.run('copy', { link, prefix, files: diff.added });
+    const diff = diffFiles(options.files, options.link.src.files);
+    await this.run('remove', { ...options, files: diff.removed });
+    await this.run('copy', { ...options, files: diff.added });
   }
 
   async run(
     type: RunType,
     options: { link: Link; files: PackageFile[]; prefix?: PrefixOptions }
   ): Promise<void> {
-    const { dryRun, force, skip } = this.options;
     const { link, files } = options;
+    const { force, skip } = link.options;
     if (files.length === 0 || ((!force || skip) && !link.isDependency())) {
       // do nothing if not a dependency
       return;
     }
 
-    const count = { done: 0, error: 0, skip: 0 };
     // handle tty for progress loader
     const { isTTY } = process.stdout;
+    const { dryRun } = this.options;
+    const count = { done: 0, error: 0, skip: 0 };
     // no need to clear timer
-    const timer = new Timer();
     const prefix: PrefixOptions = { link, dryRun, ...options.prefix };
     const [color, label] =
       type === 'copy'
@@ -108,6 +105,7 @@ export class Runner {
     const displayType = chalk.bgBlack[color](label);
     // keep total outside in case files.length changes
     const total = files.length;
+    const timer = new Timer();
     const logs = () => {
       return ([] as (string | number)[]).concat(
         displayType,
@@ -168,16 +166,13 @@ export class Runner {
 
   async reinit(options: { link: Link; prefix?: PrefixOptions }): Promise<void> {
     const pkg = options.link.src;
+    const prefix: PrefixOptions = { ...options.prefix, pkg };
     const timer = new Timer();
-    const prefix: PrefixOptions = {
-      pkg,
-      dryRun: this.options.dryRun,
-      ...options.prefix
-    };
+    const dir = cwd(options.link.options.cwd);
     const logs = () => [
       chalk.bgBlack.cyan('~init'),
       'Reinitialize package:',
-      chalk.dim(path.relative(this.cwd, pkg.path) || '.'),
+      chalk.dim(path.relative(dir, pkg.path) || '.'),
       chalk.yellow(timer.diff('init'))
     ];
 

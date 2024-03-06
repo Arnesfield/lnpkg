@@ -8,12 +8,17 @@ import { PackageFile } from '../package/package.types';
 import { Batch } from '../utils/batch';
 import { Queue } from '../utils/queue';
 import { simplifyPaths } from '../utils/simplify-paths';
+import { Link } from './link';
 import { Manager } from './manager';
 import { RunType, Runner } from './runner';
 
 type EventName = 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
 
-export function watch(manager: Manager, runner: Runner): FSWatcher {
+export function watch(
+  links: Link[],
+  manager: Manager,
+  runner: Runner
+): FSWatcher {
   const runQueue = new Queue<{
     type: RunType;
     package: Package;
@@ -24,7 +29,7 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
     const cacheMap: { [path: string]: PackageFile[] | undefined } =
       Object.create(null);
     // find all links with this source package
-    for (const link of manager.links) {
+    for (const link of links) {
       if (link.src !== item.package) {
         continue;
       }
@@ -115,7 +120,7 @@ export function watch(manager: Manager, runner: Runner): FSWatcher {
   );
 
   return chokidarWatch(
-    manager.links.map(link => link.src.path),
+    links.map(link => link.src.path),
     { ignoreInitial: true }
   ).on('all', (event, path) => watchQueue.add({ event, path }));
 }

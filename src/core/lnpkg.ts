@@ -2,6 +2,7 @@ import chalk from 'chalk';
 import { FSWatcher } from 'chokidar';
 import { getEntries } from '../helpers/get-entries';
 import { Logger } from '../helpers/logger';
+import { scopeOptions } from '../helpers/scope-options';
 import { errorLog } from '../utils/error';
 import { pluralize } from '../utils/pluralize';
 import { Timer } from '../utils/timer';
@@ -17,7 +18,9 @@ import { watch } from './watch';
  * @returns The LnPkg object.
  */
 export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
-  const entries = await getEntries(options);
+  // run scopeOptions a second time (for cli)
+  // then main options into inputs
+  const entries = await getEntries(scopeOptions(options));
   if (entries.length === 0) {
     throw new Error('No entries found.');
   }
@@ -26,9 +29,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
   const manager = new Manager();
   const runner = new Runner(logger, options);
   const timer = new Timer();
-  const { unlink, watchOnly } = options;
 
-  const type = unlink ? 'remove' : 'copy';
   const message = () => chalk.yellow(timer.diff('entry'));
   timer.start('main');
   for (const entry of entries) {
@@ -44,11 +45,12 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
       logger.error({ error: true }, errorLog(error), message());
       continue;
     }
-    if (
-      runner.checkLink(link, { message: message() }) &&
-      (unlink || !watchOnly)
-    ) {
-      await runner.run(type, { link, files: link.src.files });
+    const { options } = link;
+    if (runner.checkLink(link, { message: message() }) && !options.watchOnly) {
+      await runner.run(options.unlink ? 'remove' : 'copy', {
+        link,
+        files: link.src.files
+      });
     }
   }
 
@@ -79,8 +81,13 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
   );
 
   // watch only if links are available
-  if (manager.links.length > 0 && !unlink && (options.watch || watchOnly)) {
-    watcher = watch(manager, runner);
+  // get all links that are watchable
+  const watchLinks = manager.links.filter(link => {
+    const { options } = link;
+    return !options.unlink && (options.watch || options.watchOnly);
+  });
+  if (watchLinks.length > 0) {
+    watcher = watch(watchLinks, manager, runner);
     logger.log({ app: true }, 'Watching for package file changes.');
   }
   return lnpkg;

@@ -1,9 +1,14 @@
 import path from 'path';
 import { hasDependency } from '../package/has-dependency';
 import { Package } from '../package/package';
+import { ScopedOptions } from './lnpkg.types';
 
 export class Link {
-  constructor(readonly src: Package, readonly dest: Package) {}
+  constructor(
+    readonly options: ScopedOptions,
+    readonly src: Package,
+    readonly dest: Package
+  ) {}
 
   getDestPath(...paths: string[]): string {
     return path.resolve(
@@ -21,4 +26,7 @@ export class Link {
     const { name } = this.src.json;
     return typeof name === 'string' && hasDependency(this.dest.json, name);
   }
+
+  // TODO: linking src -> dest === src files
+  // TODO: unlinking src -> dest === src files from dest
 }

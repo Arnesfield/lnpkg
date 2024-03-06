@@ -1,6 +1,8 @@
 import { PackageJson } from '@npmcli/package-json';
 
 export function hasDependency(json: PackageJson, name: string): boolean {
+  // NOTE: expect that __proto__ is never used anyway
+  // bypass check with force flag
   return !!(
     name !== '__proto__' &&
     (json.dependencies?.[name] ||

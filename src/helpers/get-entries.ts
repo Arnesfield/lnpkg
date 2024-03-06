@@ -1,38 +1,32 @@
 import { glob } from 'glob';
 import path from 'path';
-import { LnPkgOptions } from '../core/lnpkg.types';
-import { Entry } from '../core/manager';
+import { Entry, ScopedInput } from '../types/common.types';
 import { ensureArray } from '../utils/ensure-array';
 import { cwd } from '../utils/path.utils';
 
-export interface GetEntriesOptions
-  extends Pick<LnPkgOptions, 'cwd' | 'dest' | 'input'> {}
-
 // resolve paths with cwd
 // assume all paths used by Package and Link are resolved with cwd
-export async function getEntries(options: GetEntriesOptions): Promise<Entry[]> {
+export async function getEntries(inputs: ScopedInput[]): Promise<Entry[]> {
   const entries: Entry[] = [];
-  const dir = cwd(options.cwd);
-  const inputs = ensureArray(options.input);
-  const dests = await expand(options.dest, dir);
-  // NOTE: duplicates not filtered out
-  for (const defaultDest of dests) {
-    const defaultDests = await expand(defaultDest, dir);
-    for (const input of inputs) {
-      const isObject = typeof input === 'object';
-      const srcs = await expand(isObject ? input.src : input, dir);
-      // fallback to default dests if no dest provided
-      const dests =
-        isObject && input.dest != null
-          ? await expand(input.dest, dir)
-          : defaultDests;
-      for (const dest of dests) {
-        for (const src of srcs) {
-          entries.push({
-            src: path.resolve(dir, src),
-            dest: path.resolve(dir, dest)
-          });
-        }
+  // NOTE: assume dests maintain reference
+  const destsCache = new WeakMap<string[], string[]>();
+  for (const input of inputs) {
+    const dir = cwd(input.cwd);
+    const srcs = await expand(input.src, dir);
+    // use cache when available
+    input.dest ||= [];
+    let dests = destsCache.get(input.dest);
+    if (!dests) {
+      dests = await expand(input.dest, dir);
+      destsCache.set(input.dest, dests);
+    }
+    for (const dest of dests) {
+      for (const src of srcs) {
+        entries.push({
+          options: input,
+          src: path.resolve(dir, src),
+          dest: path.resolve(dir, dest)
+        });
       }
     }
   }
