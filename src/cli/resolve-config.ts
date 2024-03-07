@@ -2,7 +2,7 @@ import path from 'path';
 import { LnPkgOptions } from '../core/lnpkg.types';
 import { ensureArray } from '../utils/ensure-array';
 import { readFile } from '../utils/fs.utils';
-import { getStdin } from '../utils/stdin';
+import { stdin } from '../utils/stdin';
 
 export async function resolveConfigs(
   cwd: string,
@@ -17,17 +17,19 @@ export async function resolveConfigs(
 }
 
 async function resolveConfig(cwd: string, config: string) {
-  const buffer =
+  let json =
     config === '-'
-      ? await getStdin()
+      ? await stdin()
       : typeof config === 'string'
       ? await readFile(path.resolve(cwd, config))
       : undefined;
-  const options: LnPkgOptions = buffer ? JSON.parse(buffer.toString()) : {};
+  // eslint-disable-next-line no-cond-assign
+  const options: LnPkgOptions = (json &&= json.trim()) ? JSON.parse(json) : {};
   // in case options is not a valid object
   if (!options || typeof options !== 'object' || Array.isArray(options)) {
     throw new Error('Unable to parse config.');
   }
+  // ensure required properties
   options.input = ensureArray(options.input);
   return options;
 }

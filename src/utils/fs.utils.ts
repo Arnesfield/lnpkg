@@ -12,12 +12,12 @@ async function lstat(value: string): Promise<fs.Stats> {
   }
 }
 
-export async function readFile(value: string): Promise<Buffer> {
+export async function readFile(value: string): Promise<string> {
   const stats = await lstat(value);
   if (!stats.isFile()) {
     throw new Error(`Not a file: ${value}`);
   }
-  return fs.promises.readFile(value);
+  return fs.promises.readFile(value, { encoding: 'utf8' });
 }
 
 export async function cp(src: string, dest: string): Promise<void> {

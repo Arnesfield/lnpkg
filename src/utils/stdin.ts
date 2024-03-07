@@ -1,15 +1,16 @@
 /**
- * Get buffer from stdin.
- * @returns The buffer.
+ * Get input from stdin.
+ * @returns The input value.
  */
-export function getStdin(): Promise<Buffer> {
+export function stdin(): Promise<string> {
   return new Promise((resolve, reject) => {
     // NOTE: taken from https://stackoverflow.com/a/16351842/7013346
-    const chunks: Buffer[] = [];
+    const chunks: string[] = [];
     process
       .openStdin()
+      .setEncoding('utf8')
       .on('data', chunk => chunks.push(chunk))
       .on('error', reject)
-      .on('end', () => resolve(Buffer.concat(chunks)));
+      .on('end', () => resolve(chunks.join('')));
   });
 }
