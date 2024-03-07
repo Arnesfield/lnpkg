@@ -88,7 +88,7 @@ export class Runner {
   ): Promise<void> {
     const { link, files } = options;
     const { force, skip } = link.options;
-    if ((!force || skip) && !link.isDependency()) {
+    if (files.length === 0 || ((!force || skip) && !link.isDependency())) {
       // do nothing if not a dependency
       return;
     }
@@ -118,7 +118,7 @@ export class Runner {
     };
 
     timer.start('file');
-    if (isTTY || files.length === 0) {
+    if (isTTY) {
       this.logger.log(prefix, ...logs());
     }
     const promises = files.map(async file => {
