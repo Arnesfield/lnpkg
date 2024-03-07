@@ -92,13 +92,16 @@ export class Package {
     return file && this._files ? this._files.indexOf(file) : -1;
   }
 
-  async getFile(filePath: string): Promise<PackageFile | undefined> {
+  async getFile(
+    filePath: string,
+    refresh = true
+  ): Promise<PackageFile | undefined> {
     // check if part of src path
     filePath = absolute(filePath, this.path);
     let file = this.fileLookup[filePath];
     if (!file) {
       // if no match, reload package files
-      await this.files(true);
+      await this.files(refresh);
       file = this.fileLookup[filePath];
     }
     return file;

@@ -97,7 +97,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
       ? manager.links.filter(link => !link.options.unlink)
       : [];
   if (watchLinks.length > 0) {
-    watcher = watch(watchLinks, manager, runner);
+    watcher = watch(watchLinks, runner);
     logger.log({ app: true }, 'Watching for package file changes.');
   }
   return lnpkg;

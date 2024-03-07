@@ -1,81 +1,66 @@
 import { FSWatcher, watch as chokidarWatch } from 'chokidar';
 import throttle from 'lodash.throttle';
 import path from 'path';
-import { findPackageOwner } from '../helpers/find-package-owner';
-import { PrefixOptions } from '../helpers/logger';
+import { RunItem, runItem } from '../helpers/run-item';
 import { Package } from '../package/package';
 import { PackageFile } from '../package/package.types';
 import { Batch } from '../utils/batch';
 import { Queue } from '../utils/queue';
 import { simplifyPaths } from '../utils/simplify-paths';
 import { Link } from './link';
-import { Manager } from './manager';
 import { RunType, Runner } from './runner';
 
 type EventName = 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
 
-export function watch(
-  links: Link[],
-  manager: Manager,
-  runner: Runner
-): FSWatcher {
-  const runQueue = new Queue<{
-    type: RunType;
-    package: Package;
-    files: PackageFile[]; // assume files has length
-  }>(async item => {
-    const prefix: PrefixOptions = { time: true };
-    // reinitialize only once for package.json changes
-    const cacheMap: { [path: string]: PackageFile[] | undefined } =
-      Object.create(null);
-    // find all links with this source package
-    for (const link of links) {
-      if (link.src !== item.package) {
-        continue;
-      }
-      // reinit if updating package.json
-      // NOTE: currently no handler when removing package.json
-      if (
-        item.type === 'remove' ||
-        !item.files.some(file => file.filePath === 'package.json')
-      ) {
-        await runner.run(item.type, { link, files: item.files, prefix });
-        continue;
-      }
+interface WatchQueueItem {
+  path: string;
+  event: EventName;
+  packages: Package[];
+}
 
-      // for package.json changes, unlink existing files and reinit
-      if (!cacheMap[link.src.path]) {
-        // remove package.json to include it in refresh copy
-        const files = (await link.src.files()).slice();
-        const index = link.src.indexOf('package.json');
-        if (index > -1) {
-          files.splice(index, 1);
-        }
-        cacheMap[link.src.path] = files;
-        // reinit after caching files to refresh
-        await runner.reinit({ link, prefix });
-      }
-      if (runner.checkLink(link, prefix)) {
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const files = cacheMap[link.src.path]!;
-        await runner.refresh({ link, prefix, files });
-      }
-    }
-  });
-
+export function watch(links: Link[], runner: Runner): FSWatcher {
+  const removeEvents: EventName[] = ['unlink', 'unlinkDir'];
   const watchBatch = new Batch<
     Package,
     { event: EventName; file: PackageFile }
   >();
 
-  // throttle before processing batch
-  const addEvents = ['add', 'addDir', 'change'];
-  const processBatch = throttle(() => {
+  async function batchItems(items: WatchQueueItem[]) {
+    // avoid refreshing files more than once
+    const didLoadFiles: { [path: string]: boolean } = Object.create(null);
+    for (const item of items) {
+      const { event } = item;
+      const isFile = !event.includes('Dir');
+      for (const pkg of item.packages) {
+        // if updating directory, skip finding package owner
+        if (!isFile) {
+          watchBatch.add(pkg, {
+            event,
+            file: {
+              path: item.path,
+              filePath: path.relative(pkg.path, item.path)
+            }
+          });
+          continue;
+        }
+        // find package owner
+        const file = await pkg.getFile(item.path, !didLoadFiles[pkg.path]);
+        didLoadFiles[pkg.path] = true;
+        if (file) {
+          watchBatch.add(pkg, { event, file });
+          break;
+        }
+      }
+    }
+  }
+
+  function processBatch() {
     // group by type
+    const run: RunItem[] = [];
     const typeBatch = new Batch<RunType, PackageFile>();
     for (const [pkg, items] of watchBatch.flush()) {
       for (const item of items) {
-        const type = addEvents.includes(item.event) ? 'copy' : 'remove';
+        const type = removeEvents.includes(item.event) ? 'remove' : 'copy';
         typeBatch.add(type, item.file);
       }
       for (const [type, files] of typeBatch.flush()) {
@@ -85,42 +70,51 @@ export function watch(
         if (roots.length === 0) {
           continue;
         }
-        runQueue.add({ type, package: pkg, files: roots });
+        run.push({ type, package: pkg, files: roots });
       }
     }
-    // need ms to properly simplyfy paths
-  }, 100);
+    return run;
+  }
 
-  const watchQueue = new Queue<{ event: EventName; path: string }>(
-    async item => {
-      // get package candidates based on path
-      let packages = manager.packages.filter(pkg => {
-        return pkg.isPathInPackage(item.path);
-      });
-      // if updating directory, skip finding package owner
-      const isFile = !item.event.includes('Dir');
-      const owner = isFile
-        ? await findPackageOwner(item.path, packages)
-        : undefined;
-      if (owner) {
-        packages = [owner.package];
-      }
-      for (const pkg of packages) {
-        const file = isFile
-          ? owner?.file
-          : { filePath: path.relative(pkg.path, item.path), path: item.path };
-        // if file does not exist even once, stop loop
-        if (!file) {
-          break;
-        }
-        watchBatch.add(pkg, { event: item.event, file });
-      }
-      processBatch();
+  const watchQueue = new Queue<WatchQueueItem[]>(async items => {
+    await batchItems(items);
+    for (const item of processBatch()) {
+      await runItem(item, links, runner);
     }
+  });
+
+  // only process the last known event of a certain path: path -> event
+  let watchMap: { [path: string]: EventName } = Object.create(null);
+  const sourcePackages = Array.from(new Set(links.map(link => link.src)));
+  const processWatch = throttle(
+    () => {
+      const events = watchMap;
+      // unset for next batch
+      watchMap = Object.create(null);
+      // get package candidates based on path
+      const items: WatchQueueItem[] = [];
+      for (const path in events) {
+        items.push({
+          path,
+          event: events[path],
+          packages: sourcePackages.filter(pkg => pkg.isPathInPackage(path))
+        });
+      }
+      watchQueue.add(items);
+    },
+    100,
+    { leading: false }
   );
 
   return chokidarWatch(
     links.map(link => link.src.path),
-    { ignoreInitial: true }
-  ).on('all', (event, path) => watchQueue.add({ event, path }));
+    { ignoreInitial: true, disableGlobbing: true }
+  ).on('all', (event, path) => {
+    // remove to update key value order
+    if (path in watchMap) {
+      delete watchMap[path];
+    }
+    watchMap[path] = event;
+    processWatch();
+  });
 }
