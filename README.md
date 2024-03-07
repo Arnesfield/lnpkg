@@ -1,6 +1,6 @@
 > [!CAUTION]
 >
-> **_This package is an alpha version: currently untested and is considered unstable. Usage and API may change at any time. Use at your own risk._**
+> **_This is an alpha version of the package: currently untested and is considered unstable. Usage and API may change at any time. Use at your own risk._**
 
 # lnpkg
 
