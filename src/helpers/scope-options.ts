@@ -21,8 +21,6 @@ export function scopeOptions(options: LnPkgOptions): ScopedInput[] {
     input.force ??= options.force;
     input.skip ??= options.skip;
     input.unlink ??= options.unlink;
-    input.watch ??= options.watch;
-    input.watchOnly ??= options.watchOnly;
     return input;
   });
   return input;

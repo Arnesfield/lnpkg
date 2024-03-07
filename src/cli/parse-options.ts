@@ -30,9 +30,13 @@ export async function parseOptions(command: Command): Promise<LnPkgOptions> {
   const resolvedOptions = await resolveConfigs(cwd(opts.cwd), configs);
   // cli options take priority, everything else (configs) should get scoped
   const input = (command.args as (string | Input)[]).concat(link);
+  const options: LnPkgOptions = { ...opts, input, dest: _dest || _dests };
   for (const opts of resolvedOptions) {
     // scope and merge inputs (options -> inputs)
     input.push(...scopeOptions(opts));
+    options.dryRun ??= opts.dryRun;
+    options.watch ??= opts.watch;
+    options.watchOnly ??= opts.watchOnly;
   }
-  return { ...opts, input, dest: _dest || _dests };
+  return options;
 }

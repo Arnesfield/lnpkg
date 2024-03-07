@@ -36,6 +36,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
   const manager = new Manager();
   const runner = new Runner(logger, options);
   const timer = new Timer();
+  const { watchOnly } = options;
 
   const message = () => chalk.yellow(timer.diff('entry'));
   timer.start('main');
@@ -52,7 +53,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
       logger.error({ error: true }, errorLog(error), message());
       continue;
     }
-    const { unlink, watchOnly } = link.options;
+    const { unlink } = link.options;
     if (runner.checkLink(link, { message: message() }) && !watchOnly) {
       // linking src -> dest === copy src files to dest
       // unlinking src -> dest === remove src files from dest
@@ -91,10 +92,10 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
 
   // watch only if links are available
   // get all links that are watchable
-  const watchLinks = manager.links.filter(link => {
-    const { options } = link;
-    return !options.unlink && (options.watch || options.watchOnly);
-  });
+  const watchLinks =
+    options.watch || watchOnly
+      ? manager.links.filter(link => !link.options.unlink)
+      : [];
   if (watchLinks.length > 0) {
     watcher = watch(watchLinks, manager, runner);
     logger.log({ app: true }, 'Watching for package file changes.');

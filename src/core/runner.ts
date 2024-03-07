@@ -9,7 +9,7 @@ import { cp, rm } from '../utils/fs.utils';
 import { cwd } from '../utils/path.utils';
 import { Timer } from '../utils/timer';
 import { Link } from './link';
-import { ScopedOptions } from './lnpkg.types';
+import { LnPkgOptions, ScopedOptions } from './lnpkg.types';
 
 export type RunType = 'copy' | 'remove';
 
@@ -21,7 +21,7 @@ export interface RunnerCommonOptions {
 export class Runner {
   constructor(
     private readonly logger: Logger,
-    private readonly options: { dryRun?: boolean }
+    private readonly options: Pick<LnPkgOptions, 'dryRun'>
   ) {}
 
   checkLink(link: Link, prefix?: PrefixOptions): boolean {
