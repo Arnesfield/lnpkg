@@ -32,7 +32,7 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
     throw new Error('No entries found.');
   }
 
-  const logger = new Logger();
+  const logger = new Logger(options);
   const manager = new Manager();
   const runner = new Runner(logger, options);
   const timer = new Timer();

@@ -1,24 +1,19 @@
 import { Command, Option } from 'commander';
 import { description, name, version } from '../../package.json';
+import { LnPkgOptions } from '../core/lnpkg.types';
+import { LOG_LEVEL } from '../helpers/logger';
 
 export interface ProgramInput {
   src: string[];
   dest: string[];
 }
 
-export interface ProgramOptions {
+export interface ProgramOptions extends Omit<LnPkgOptions, 'input' | 'dest'> {
   dest?: string[];
   dests?: string[];
   link?: ProgramInput[];
-  cwd?: string;
   config?: string[];
   configs?: string[];
-  dryRun?: boolean;
-  force?: boolean;
-  skip?: boolean;
-  unlink?: boolean;
-  watch?: boolean;
-  watchOnly?: boolean;
 }
 
 // keep array reference
@@ -46,6 +41,10 @@ export function createCommand(): Command {
     "file path to config(s) or '-' for stdin (json format)"
   ).argParser(parseConfig);
   configsOption.variadic = true;
+
+  const logLevels = Object.keys(LOG_LEVEL)
+    .map(level => `'${level}'`)
+    .join(', ');
 
   const command = new Command()
     .name(name)
@@ -127,6 +126,19 @@ export function createCommand(): Command {
         '-W, --watch-only',
         'skip linking packages and watch package files for changes only'
       ).implies({ watch: false })
+    )
+    .option('-q, --quiet', 'disable logging')
+    .option(
+      '    --log-level <level>',
+      `output logs only of equal or higher level (${logLevels}, default: 'info')`,
+      value => {
+        if (!(value in LOG_LEVEL)) {
+          command.error(
+            `error: option '--log-level' argument '${value}' is invalid. Allowed choices are ${logLevels}.`
+          );
+        }
+        return value;
+      }
     )
     .version(`v${version}`, '-v, --version');
   // add hidden `--no` option for boolean options

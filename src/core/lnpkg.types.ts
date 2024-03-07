@@ -77,6 +77,15 @@ export interface LnPkgOptions extends ScopedOptions {
    * @overridable By the CLI options or the previous loaded config file.
    */
   watchOnly?: boolean;
+  /**
+   * Disable logging.
+   */
+  quiet?: boolean;
+  /**
+   * Output logs only of equal or higher level.
+   * @default 'info'
+   */
+  logLevel?: 'info' | 'warn' | 'error';
 }
 
 /**

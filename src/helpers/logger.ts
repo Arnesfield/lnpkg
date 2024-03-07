@@ -4,6 +4,7 @@ import stripAnsi from 'strip-ansi';
 import util from 'util';
 import { name } from '../../package.json';
 import { Link } from '../core/link';
+import { LnPkgOptions } from '../core/lnpkg.types';
 import { Package } from '../package/package';
 import { colors } from '../utils/colors';
 import { formatTime } from '../utils/format-time';
@@ -26,11 +27,25 @@ export interface PrefixOptions {
   message?: string;
 }
 
+export const LOG_LEVEL = (() => {
+  const levels = { info: 1, warn: 2, error: 3 } as const;
+  return Object.assign(Object.create(null) as typeof levels, levels);
+})();
+
 export class Logger {
   private readonly color = colors();
+  private readonly level: number;
+  private readonly quiet: boolean | undefined;
   readonly stats = { errors: 0, warnings: 0 };
   /** The last log line. */
   private line: string | undefined;
+
+  constructor(options: Pick<LnPkgOptions, 'quiet' | 'logLevel'>) {
+    // default to info
+    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+    this.level = LOG_LEVEL[options.logLevel!] ?? 1;
+    this.quiet = options.quiet;
+  }
 
   getDisplayName(pkg: Package): string {
     return chalk[this.color(pkg)].bold(pkg.displayName);
@@ -82,6 +97,10 @@ export class Logger {
     return prefix.join(' ');
   }
 
+  private checkLevel(level: number) {
+    return !this.quiet && this.level <= level;
+  }
+
   private print(
     type: 'log' | 'error',
     options: PrefixOptions,
@@ -96,15 +115,19 @@ export class Logger {
   }
 
   log(options: PrefixOptions, ...params: unknown[]): void {
-    this.print('log', options, params);
+    if (this.checkLevel(LOG_LEVEL.info)) {
+      this.print('log', options, params);
+    }
   }
 
   error(options: PrefixOptions, ...params: unknown[]): void {
-    this.print('error', options, params);
+    if (this.checkLevel(options.warn ? LOG_LEVEL.warn : LOG_LEVEL.error)) {
+      this.print('error', options, params);
+    }
   }
 
   clearPreviousLine(): void {
-    if (typeof this.line !== 'string') {
+    if (typeof this.line !== 'string' || !this.checkLevel(LOG_LEVEL.info)) {
       return;
     }
     const log = stripAnsi(this.line);
