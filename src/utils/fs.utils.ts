@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { isNoEntryError } from './error';
+import { isNoEntryError } from './error.js';
 
 async function lstat(value: string): Promise<fs.Stats> {
   try {

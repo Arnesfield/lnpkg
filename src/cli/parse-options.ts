@@ -1,8 +1,8 @@
-import { Input, LnPkgOptions } from '../core/lnpkg.types';
-import { scopeOptions } from '../helpers/scope-options';
-import { cwd } from '../utils/path.utils';
-import { ProgramOptions } from './parse-args';
-import { resolveConfigs } from './resolve-config';
+import { Input, LnPkgOptions } from '../core/lnpkg.types.js';
+import { scopeOptions } from '../helpers/scope-options.js';
+import { cwd } from '../utils/path.utils.js';
+import { ProgramOptions } from './parse-args.js';
+import { resolveConfigs } from './resolve-config.js';
 
 export async function parseOptions(
   opts: ProgramOptions

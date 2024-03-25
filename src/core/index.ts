@@ -1,2 +1,2 @@
-export * from './lnpkg';
-export * from './lnpkg.types';
+export * from './lnpkg.js';
+export * from './lnpkg.types.js';

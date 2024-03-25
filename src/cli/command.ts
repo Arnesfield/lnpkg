@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
 import { description, name, version } from '../../package.json';
-import { LnPkgOptions } from '../core/lnpkg.types';
-import { LOG_LEVEL } from '../helpers/logger';
+import { LnPkgOptions } from '../core/lnpkg.types.js';
+import { LOG_LEVEL } from '../helpers/logger.js';
 
 export interface ProgramInput {
   src: string[];

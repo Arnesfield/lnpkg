@@ -1,15 +1,15 @@
 import chalk from 'chalk';
 import fs from 'fs';
 import path from 'path';
-import { diffFiles } from '../helpers/diff-files';
-import { Logger, PrefixOptions } from '../helpers/logger';
-import { PackageFile } from '../package/package.types';
-import { errorLog, isNoEntryError } from '../utils/error';
-import { cp, rm } from '../utils/fs.utils';
-import { cwd } from '../utils/path.utils';
-import { Timer } from '../utils/timer';
-import { Link } from './link';
-import { LnPkgOptions, ScopedOptions } from './lnpkg.types';
+import { diffFiles } from '../helpers/diff-files.js';
+import { Logger, PrefixOptions } from '../helpers/logger.js';
+import { PackageFile } from '../package/package.types.js';
+import { errorLog, isNoEntryError } from '../utils/error.js';
+import { cp, rm } from '../utils/fs.utils.js';
+import { cwd } from '../utils/path.utils.js';
+import { Timer } from '../utils/timer.js';
+import { Link } from './link.js';
+import { LnPkgOptions, ScopedOptions } from './lnpkg.types.js';
 
 export type RunType = 'copy' | 'remove';
 

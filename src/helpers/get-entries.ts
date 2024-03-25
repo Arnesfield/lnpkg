@@ -1,8 +1,8 @@
 import { glob } from 'glob';
 import path from 'path';
-import { Entry, ScopedInput } from '../types/common.types';
-import { ensureArray } from '../utils/ensure-array';
-import { cwd } from '../utils/path.utils';
+import { Entry, ScopedInput } from '../types/common.types.js';
+import { ensureArray } from '../utils/ensure-array.js';
+import { cwd } from '../utils/path.utils.js';
 
 // resolve paths with cwd
 // assume all paths used by Package and Link are resolved with cwd

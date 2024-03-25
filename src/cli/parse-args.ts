@@ -1,9 +1,9 @@
 import argstree from 'argstree';
 import { version } from '../../package.json';
-import { LnPkgOptions } from '../core/lnpkg.types';
-import { LOG_LEVEL } from '../helpers/logger';
-import { ProgramInput } from './command';
-import { help } from './help';
+import { LnPkgOptions } from '../core/lnpkg.types.js';
+import { LOG_LEVEL } from '../helpers/logger.js';
+import { ProgramInput } from './command.js';
+import { help } from './help.js';
 
 function parseBool(args: string[]) {
   const arg = args.length > 0 ? args[0] : null;

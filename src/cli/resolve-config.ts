@@ -1,8 +1,8 @@
 import path from 'path';
-import { LnPkgOptions } from '../core/lnpkg.types';
-import { ensureArray } from '../utils/ensure-array';
-import { readFile } from '../utils/fs.utils';
-import { stdin } from '../utils/stdin';
+import { LnPkgOptions } from '../core/lnpkg.types.js';
+import { ensureArray } from '../utils/ensure-array.js';
+import { readFile } from '../utils/fs.utils.js';
+import { stdin } from '../utils/stdin.js';
 
 export async function resolveConfigs(
   cwd: string,

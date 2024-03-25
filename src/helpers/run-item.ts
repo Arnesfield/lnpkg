@@ -1,8 +1,8 @@
-import { Link } from '../core/link';
-import { RunType, Runner } from '../core/runner';
-import { Package } from '../package/package';
-import { PackageFile } from '../package/package.types';
-import { PrefixOptions } from './logger';
+import { Link } from '../core/link.js';
+import { RunType, Runner } from '../core/runner.js';
+import { Package } from '../package/package.js';
+import { PackageFile } from '../package/package.types.js';
+import { PrefixOptions } from './logger.js';
 
 export interface RunItem {
   type: RunType;

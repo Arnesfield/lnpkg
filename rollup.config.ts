@@ -30,7 +30,9 @@ export default defineConfig([
       sourcemap: PROD,
       chunkFileNames: '[name].js'
     },
-    plugins: [esbuild(), json(), externals(), outputSize()]
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
+    plugins: [esbuild({ target: 'esnext' }), json(), externals(), outputSize()]
   },
   {
     input,
@@ -40,6 +42,8 @@ export default defineConfig([
   !PROD && {
     input,
     watch: { skipWrite: true },
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore
     plugins: [eslint(), typescript(), json(), externals()]
   }
 ]);

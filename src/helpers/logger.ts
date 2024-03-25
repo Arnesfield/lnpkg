@@ -3,11 +3,11 @@ import path from 'path';
 import stripAnsi from 'strip-ansi';
 import util from 'util';
 import { name } from '../../package.json';
-import { Link } from '../core/link';
-import { LnPkgOptions } from '../core/lnpkg.types';
-import { Package } from '../package/package';
-import { colors } from '../utils/colors';
-import { formatTime } from '../utils/format-time';
+import { Link } from '../core/link.js';
+import { LnPkgOptions } from '../core/lnpkg.types.js';
+import { Package } from '../package/package.js';
+import { colors } from '../utils/colors.js';
+import { formatTime } from '../utils/format-time.js';
 
 export interface GetPathLinkOptions {
   cwd: string;

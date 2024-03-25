@@ -1,6 +1,6 @@
-import { Input, LnPkgOptions } from '../core/lnpkg.types';
-import { ScopedInput } from '../types/common.types';
-import { ensureArray } from '../utils/ensure-array';
+import { Input, LnPkgOptions } from '../core/lnpkg.types.js';
+import { ScopedInput } from '../types/common.types.js';
+import { ensureArray } from '../utils/ensure-array.js';
 
 /**
  * Scope options into {@linkcode ScopedInput ScopedInputs}.

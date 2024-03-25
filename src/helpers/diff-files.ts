@@ -1,4 +1,4 @@
-import { PackageFile } from '../package/package.types';
+import { PackageFile } from '../package/package.types.js';
 
 export interface DiffFilesResult {
   retained: PackageFile[];

@@ -3,10 +3,10 @@ import { PackageJson } from '@npmcli/package-json';
 import { minimatch } from 'minimatch';
 import packlist from 'npm-packlist';
 import path from 'path';
-import { absolute } from '../utils/path.utils';
-import { isPathDescendant } from '../utils/simplify-paths';
-import { loadNode } from './load-node';
-import { PackageFile } from './package.types';
+import { absolute } from '../utils/path.utils.js';
+import { isPathDescendant } from '../utils/simplify-paths.js';
+import { loadNode } from './load-node.js';
+import { PackageFile } from './package.types.js';
 
 export class Package {
   private _node: Arborist.Node | undefined;

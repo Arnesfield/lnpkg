@@ -1,8 +1,8 @@
-import { help } from './cli/help';
-import { parseArgs } from './cli/parse-args';
-import { parseOptions } from './cli/parse-options';
-import { lnpkg } from './core/lnpkg';
-import { errorLog } from './utils/error';
+import { help } from './cli/help.js';
+import { parseArgs } from './cli/parse-args.js';
+import { parseOptions } from './cli/parse-options.js';
+import { lnpkg } from './core/lnpkg.js';
+import { errorLog } from './utils/error.js';
 
 export async function cli(): Promise<void> {
   // if no args, show help

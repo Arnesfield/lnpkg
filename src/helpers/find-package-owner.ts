@@ -1,5 +1,5 @@
-import { Package } from '../package/package';
-import { PackageFile } from '../package/package.types';
+import { Package } from '../package/package.js';
+import { PackageFile } from '../package/package.types.js';
 
 export async function findPackageOwner(
   filePath: string,

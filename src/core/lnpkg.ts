@@ -1,17 +1,17 @@
 import chalk from 'chalk';
 import { FSWatcher } from 'chokidar';
-import { getEntries } from '../helpers/get-entries';
-import { Logger } from '../helpers/logger';
-import { scopeOptions } from '../helpers/scope-options';
-import { ensureArray } from '../utils/ensure-array';
-import { errorLog } from '../utils/error';
-import { pluralize } from '../utils/pluralize';
-import { Timer } from '../utils/timer';
-import { Link } from './link';
-import { LnPkg, LnPkgOptions } from './lnpkg.types';
-import { Manager } from './manager';
-import { Runner } from './runner';
-import { watch } from './watch';
+import { getEntries } from '../helpers/get-entries.js';
+import { Logger } from '../helpers/logger.js';
+import { scopeOptions } from '../helpers/scope-options.js';
+import { ensureArray } from '../utils/ensure-array.js';
+import { errorLog } from '../utils/error.js';
+import { pluralize } from '../utils/pluralize.js';
+import { Timer } from '../utils/timer.js';
+import { Link } from './link.js';
+import { LnPkg, LnPkgOptions } from './lnpkg.types.js';
+import { Manager } from './manager.js';
+import { Runner } from './runner.js';
+import { watch } from './watch.js';
 
 /**
  * Link local Node.js packages.

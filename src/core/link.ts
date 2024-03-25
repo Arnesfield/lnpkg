@@ -1,8 +1,8 @@
 import path from 'path';
-import { hasDependency } from '../package/has-dependency';
-import { Package } from '../package/package';
-import { PackageFile } from '../package/package.types';
-import { ScopedOptions } from './lnpkg.types';
+import { hasDependency } from '../package/has-dependency.js';
+import { Package } from '../package/package.js';
+import { PackageFile } from '../package/package.types.js';
+import { ScopedOptions } from './lnpkg.types.js';
 
 export class Link {
   constructor(

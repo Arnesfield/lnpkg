@@ -1,14 +1,14 @@
 import { FSWatcher, watch as chokidarWatch } from 'chokidar';
 import throttle from 'lodash.throttle';
 import path from 'path';
-import { RunItem, runItem } from '../helpers/run-item';
-import { Package } from '../package/package';
-import { PackageFile } from '../package/package.types';
-import { Batch } from '../utils/batch';
-import { Queue } from '../utils/queue';
-import { simplifyPaths } from '../utils/simplify-paths';
-import { Link } from './link';
-import { RunType, Runner } from './runner';
+import { RunItem, runItem } from '../helpers/run-item.js';
+import { Package } from '../package/package.js';
+import { PackageFile } from '../package/package.types.js';
+import { Batch } from '../utils/batch.js';
+import { Queue } from '../utils/queue.js';
+import { simplifyPaths } from '../utils/simplify-paths.js';
+import { Link } from './link.js';
+import { RunType, Runner } from './runner.js';
 
 type EventName = 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
 

@@ -1,6 +1,6 @@
-import { Package } from '../package/package';
-import { Entry } from '../types/common.types';
-import { Link } from './link';
+import { Package } from '../package/package.js';
+import { Entry } from '../types/common.types.js';
+import { Link } from './link.js';
 
 export class Manager {
   readonly links: Link[] = [];

@@ -1,4 +1,4 @@
-import { Input, ScopedOptions } from '../core/lnpkg.types';
+import { Input, ScopedOptions } from '../core/lnpkg.types.js';
 
 // NOTE: internal
 
