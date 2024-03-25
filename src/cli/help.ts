@@ -1,4 +1,6 @@
+import { helpText } from '../help-text.js';
+
 export function help(): void {
-  console.log(process.env.HELP);
+  console.log(helpText());
   process.exit(0);
 }

@@ -3,7 +3,8 @@ import json from '@rollup/plugin-json';
 import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
 import { createRequire } from 'module';
-import { RollupOptions } from 'rollup';
+import path from 'path';
+import { PluginHooks, RollupOptions } from 'rollup';
 import cleanup from 'rollup-plugin-cleanup';
 import dts from 'rollup-plugin-dts';
 import esbuild from 'rollup-plugin-esbuild';
@@ -17,9 +18,21 @@ const pkg: typeof Pkg = require('./package.json');
 const input = 'src/index.ts';
 const WATCH = process.env.ROLLUP_WATCH === 'true';
 const PROD = !WATCH || process.env.NODE_ENV === 'production';
+let helpText2 = helpText;
 
 function defineConfig(options: (false | RollupOptions)[]) {
   return options.filter((options): options is RollupOptions => !!options);
+}
+
+// taken from https://github.com/rollup/rollup/issues/3414#issuecomment-751699335
+function watch(files: string[]): Partial<PluginHooks> {
+  return {
+    buildStart() {
+      for (const file of files) {
+        this.addWatchFile(path.resolve(file));
+      }
+    }
+  };
 }
 
 export default defineConfig([
@@ -32,11 +45,16 @@ export default defineConfig([
       chunkFileNames: '[name].js'
     },
     plugins: [
+      watch(['src/help-text.ts']),
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       replace({
-        'process.env.HELP': JSON.stringify(helpText()),
-        preventAssignment: true
+        preventAssignment: true,
+        values: {
+          'process.env.HELP': (id: string) => {
+            return JSON.stringify(helpText2());
+          }
+        }
       }),
       esbuild({ target: 'esnext' }),
       cleanup({
@@ -48,6 +66,26 @@ export default defineConfig([
       json(),
       externals(),
       outputSize()
+    ]
+  },
+  {
+    input: 'src/help-text.ts',
+    output: { dir: 'tmps' },
+    plugins: [
+      esbuild(),
+      externals(),
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      json(),
+      {
+        name: 'no-emit',
+        generateBundle(_, bundle) {
+          console.log(helpText2());
+          for (const file in bundle) {
+            delete bundle[file];
+          }
+        }
+      }
     ]
   },
   {
