@@ -1,5 +1,4 @@
 export function help(): void {
-  // TODO:
-  console.log('lnpkg');
+  console.log(process.env.HELP);
   process.exit(0);
 }

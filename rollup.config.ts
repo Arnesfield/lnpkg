@@ -1,5 +1,6 @@
 import eslint from '@rollup/plugin-eslint';
 import json from '@rollup/plugin-json';
+import replace from '@rollup/plugin-replace';
 import typescript from '@rollup/plugin-typescript';
 import { createRequire } from 'module';
 import { RollupOptions } from 'rollup';
@@ -9,6 +10,7 @@ import esbuild from 'rollup-plugin-esbuild';
 import externals from 'rollup-plugin-node-externals';
 import outputSize from 'rollup-plugin-output-size';
 import type Pkg from './package.json';
+import { helpText } from './src/help-text.js';
 
 const require = createRequire(import.meta.url);
 const pkg: typeof Pkg = require('./package.json');
@@ -30,6 +32,12 @@ export default defineConfig([
       chunkFileNames: '[name].js'
     },
     plugins: [
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      replace({
+        'process.env.HELP': JSON.stringify(helpText()),
+        preventAssignment: true
+      }),
       esbuild({ target: 'esnext' }),
       cleanup({
         comments: ['some', 'sources', /__PURE__/],
