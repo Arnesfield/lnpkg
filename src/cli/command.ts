@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
-import { description, name, version } from '../../package.json';
 import { LnPkgOptions } from '../core/lnpkg.types.js';
 import { LOG_LEVEL } from '../helpers/logger.js';
+import * as PKG from '../package-json.js';
 
 export interface ProgramInput {
   src: string[];
@@ -47,8 +47,8 @@ export function createCommand(): Command {
     .join(', ');
 
   const command = new Command()
-    .name(name)
-    .addHelpText('before', description + '\n')
+    .name(PKG.name)
+    .addHelpText('before', PKG.description + '\n')
     .argument('[paths...]', 'paths of source packages to link')
     .option('-n, --dry-run', 'log only without performing operations (noop)')
     .addOption(destsOption)
@@ -140,7 +140,7 @@ export function createCommand(): Command {
         return value;
       }
     )
-    .version(`v${version}`, '-v, --version');
+    .version(`v${PKG.version}`, '-v, --version');
   // add hidden `--no` option for boolean options
   // NOTE: taken from https://github.com/tj/commander.js/issues/1343#issuecomment-699546401
   const match = /^--/;

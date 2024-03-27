@@ -1,17 +1,15 @@
-// NOTE: DO NOT IMPORT DIRECTLY. GENERATE HELP TEXT TO BE REPLACED IN BUILD.
+// NOTE: GENERATE HELP TEXT TO BE REPLACED IN BUILD.
+// for some reason, json plugin does not work for this
+// so import package.json directly
 
-import { createRequire } from 'module';
 import wrapAnsi from 'wrap-ansi';
-import type Pkg from '../package.json';
+import PKG from '../package.json' with { type: 'json' };
 
 const columns = 80;
 const optionsCols = 28;
 const descCols = columns - optionsCols;
 
 export function helpText(): string {
-  const require = createRequire(import.meta.url);
-  const pkg: typeof Pkg = require('../package.json');
-
   const opts = [
     {
       option: '-d, --dests <paths...>',
@@ -94,9 +92,9 @@ export function helpText(): string {
   ];
 
   const output: string[] = [];
-  output.push(pkg.description);
+  output.push(PKG.description);
   output.push('');
-  output.push(`Usage: ${pkg.name} [paths...] [options]`);
+  output.push(`Usage: ${PKG.name} [paths...] [options]`);
   output.push('');
   output.push('Options:');
   output.push('');
