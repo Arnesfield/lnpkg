@@ -1,38 +1,29 @@
-import eslint from '@rollup/plugin-eslint';
-import json from '@rollup/plugin-json';
-import replace from '@rollup/plugin-replace';
-import typescript from '@rollup/plugin-typescript';
-import { createRequire } from 'module';
-import path from 'path';
-import { PluginHooks, RollupOptions } from 'rollup';
+import _eslint from '@rollup/plugin-eslint';
+import _json from '@rollup/plugin-json';
+import _replace from '@rollup/plugin-replace';
+import _typescript from '@rollup/plugin-typescript';
+import { RollupOptions } from 'rollup';
 import cleanup from 'rollup-plugin-cleanup';
 import dts from 'rollup-plugin-dts';
+import edit from 'rollup-plugin-edit';
 import esbuild from 'rollup-plugin-esbuild';
 import externals from 'rollup-plugin-node-externals';
 import outputSize from 'rollup-plugin-output-size';
-import type Pkg from './package.json';
+import pkg from './package.json' with { type: 'json' };
 import { helpText } from './src/help-text.js';
 
-const require = createRequire(import.meta.url);
-const pkg: typeof Pkg = require('./package.json');
-const input = 'src/index.ts';
+// NOTE: remove once import errors are fixed for their respective packages
+const eslint = _eslint as unknown as typeof _eslint.default;
+const json = _json as unknown as typeof _json.default;
+const replace = _replace as unknown as typeof _replace.default;
+const typescript = _typescript as unknown as typeof _typescript.default;
+
 const WATCH = process.env.ROLLUP_WATCH === 'true';
-const PROD = !WATCH || process.env.NODE_ENV === 'production';
-let helpText2 = helpText;
+const PROD = process.env.NODE_ENV !== 'development';
+const input = 'src/index.ts';
 
 function defineConfig(options: (false | RollupOptions)[]) {
   return options.filter((options): options is RollupOptions => !!options);
-}
-
-// taken from https://github.com/rollup/rollup/issues/3414#issuecomment-751699335
-function watch(files: string[]): Partial<PluginHooks> {
-  return {
-    buildStart() {
-      for (const file of files) {
-        this.addWatchFile(path.resolve(file));
-      }
-    }
-  };
 }
 
 export default defineConfig([
@@ -45,47 +36,39 @@ export default defineConfig([
       chunkFileNames: '[name].js'
     },
     plugins: [
-      watch(['src/help-text.ts']),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      replace({
-        preventAssignment: true,
-        values: {
-          'process.env.HELP': (id: string) => {
-            return JSON.stringify(helpText2());
+      esbuild({ target: 'esnext' }),
+      // only replace help text when not watching to properly
+      // update help-text.ts contents during development
+      !WATCH &&
+        replace({
+          preventAssignment: true,
+          'process.env.HELP': JSON.stringify(helpText())
+        }),
+      // remove dangling wrap-ansi import
+      // once it's replaced with the generated help text
+      edit({
+        chunk(data) {
+          const pkg = 'wrap-ansi';
+          const match = `import '${pkg}';\n`;
+          if (data.contents.includes(match)) {
+            console.log(
+              '[edit] Removing %o import for %o.',
+              pkg,
+              data.fileName
+            );
+            return data.contents.replace(match, '');
           }
         }
       }),
-      esbuild({ target: 'esnext' }),
       cleanup({
         comments: ['some', 'sources', /__PURE__/],
         extensions: ['js', 'ts']
       }),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
       json(),
-      externals(),
+      // explicitly treat wrap-ansi as external
+      // other external dev deps may be a mistake
+      externals({ include: ['wrap-ansi'] }),
       outputSize()
-    ]
-  },
-  {
-    input: 'src/help-text.ts',
-    output: { dir: 'tmps' },
-    plugins: [
-      esbuild(),
-      externals(),
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      json(),
-      {
-        name: 'no-emit',
-        generateBundle(_, bundle) {
-          console.log(helpText2());
-          for (const file in bundle) {
-            delete bundle[file];
-          }
-        }
-      }
     ]
   },
   {
@@ -96,8 +79,6 @@ export default defineConfig([
   !PROD && {
     input,
     watch: { skipWrite: true },
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
     plugins: [eslint(), typescript(), json(), externals()]
   }
 ]);

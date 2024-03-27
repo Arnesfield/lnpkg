@@ -2,9 +2,9 @@ import chalk from 'chalk';
 import path from 'path';
 import stripAnsi from 'strip-ansi';
 import util from 'util';
-import { name } from '../../package.json';
 import { Link } from '../core/link.js';
 import { LnPkgOptions } from '../core/lnpkg.types.js';
+import * as PKG from '../package-json.js';
 import { Package } from '../package/package.js';
 import { colors } from '../utils/colors.js';
 import { formatTime } from '../utils/format-time.js';
@@ -67,7 +67,7 @@ export class Logger {
       prefix.push('[' + chalk.gray(formatTime(new Date())) + ']');
     }
     if (options.app) {
-      prefix.push(chalk.bgBlack(name));
+      prefix.push(chalk.bgBlack(PKG.name));
     }
     if (options.dryRun) {
       prefix.push(chalk.bgBlack.gray('nop'));

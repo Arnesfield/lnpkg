@@ -1,7 +1,7 @@
-import argstree from 'argstree';
-import { version } from '../../package.json';
+import { spec } from 'argstree';
 import { LnPkgOptions } from '../core/lnpkg.types.js';
 import { LOG_LEVEL } from '../helpers/logger.js';
+import * as PKG from '../package-json.js';
 import { ProgramInput } from './command.js';
 import { help } from './help.js';
 
@@ -17,73 +17,61 @@ export interface ProgramOptions extends Omit<LnPkgOptions, 'input' | 'dest'> {
 }
 
 export function parseArgs(args = process.argv.slice(2)): ProgramOptions {
-  const root = argstree(args, {
-    alias: {
-      '-n': '--dry-run',
-      '--no-dry-run': ['--dry-run', '0'],
-      '-d': '--dests',
-      '-l': '--link',
-      '-t': '--to',
-      '-C': '--cwd',
-      '-c': '--configs',
-      '-f': '--force',
-      '--no-force': ['--force', '0'],
-      '-s': '--skip',
-      '--no-skip': ['--skip', '0'],
-      '-u': '--unlink',
-      '--no-unlink': ['--unlink', '0'],
-      '-w': '--watch',
-      '--no-watch': ['--watch', '0'],
-      '-W': '--watch-only',
-      '--no-watch-only': ['--watch-only', '0'],
-      '-q': '--quiet',
-      '--no-quiet': ['--quiet', '0'],
-      '-v': '--version',
-      '-h': '--help'
-    },
-    args: {
-      '--dry-run': { id: 'dryRun', maxRead: 0 },
-      '--dest': { min: 1, max: 1 },
-      '--dests': { min: 1 },
-      '--link': { min: 1 },
-      '--to': { min: 1 },
-      '--cwd': { min: 1, max: 1 },
-      '--config': { min: 1, max: 1 },
-      '--configs': { min: 1 },
-      '--force': { id: 'force', maxRead: 0 },
-      '--skip': { id: 'skip', maxRead: 0 },
-      '--unlink': { id: 'unlink', maxRead: 0 },
-      '--watch': { id: 'watch', maxRead: 0 },
-      '--watch-only': { id: 'watchOnly', maxRead: 0 },
-      '--quiet': { id: 'quiet', maxRead: 0 },
-      '--log-level': {
-        min: 1,
-        max: 1,
-        validate(data) {
-          const value = data.args[0];
-          if (!(value in LOG_LEVEL)) {
-            const logLevels = Object.keys(LOG_LEVEL)
-              .map(level => `'${level}'`)
-              .join(', ');
-            throw new Error(
-              `Option '--log-level' argument '${value}' is invalid. Allowed choices are: ${logLevels}`
-            );
-          }
-          return true;
-        }
-      },
-      '--version': { maxRead: 0 },
-      '--help': {
-        maxRead: 0,
-        validate: data => (parseBool(data.args) && help(), true)
-      },
-      '--': { args: {} }
+  const cmd = spec({ min: 0, strict: true });
+  cmd.option('--dest', { min: 1, max: 1 });
+  cmd.option('--dests', { min: 1 }).alias('-d');
+  cmd.option('--link', { min: 1 }).alias('-l');
+  cmd.option('--to', { min: 1 }).alias('-t');
+  cmd.option('--cwd', { min: 1, max: 1 }).alias('-C');
+  cmd.option('--config', { min: 1, max: 1 });
+  cmd.option('--configs', { min: 1 }).alias('-c');
+  cmd.option('--log-level', {
+    min: 1,
+    max: 1,
+    validate(data) {
+      const value = data.args[0];
+      if (!(value in LOG_LEVEL)) {
+        const logLevels = Object.keys(LOG_LEVEL)
+          .map(level => `'${level}'`)
+          .join(', ');
+        throw new Error(
+          `Option '--log-level' argument '${value}' is invalid. Allowed choices are: ${logLevels}`
+        );
+      }
+      return true;
     }
   });
+  cmd.option('--version', { maxRead: 0 }).alias('-v');
+  cmd
+    .option('--help', {
+      maxRead: 0,
+      validate: data => parseBool(data.args) && help()
+    })
+    .alias('-h');
+  cmd.command('--', { strict: false });
 
+  // flags / booleans
+  const bools = ['force', 'skip', 'unlink', 'watch', 'quiet'] as const;
+  for (const bool of bools) {
+    cmd
+      .option(`--${bool}`, { id: bool, maxRead: 0 })
+      .alias(`-${bool[0]}`)
+      .alias(`--no-${bool}`, '0');
+  }
+  cmd
+    .option('--dry-run', { id: 'dryRun', maxRead: 0 })
+    .alias('-n')
+    .alias('--no-dry-run', '0');
+  cmd
+    .option('--watch-only', { id: 'watchOnly', maxRead: 0 })
+    .alias('-W')
+    .alias('--no-watch-only', '0');
+
+  const root = cmd.parse(args);
   // output version
-  if (root.descendants.some(node => node.id === '--version')) {
-    console.log('v%s', version);
+  const versionNode = root.descendants.find(node => node.id === '--version');
+  if (versionNode && parseBool(versionNode.args)) {
+    console.log('v%s', PKG.version);
     process.exit(0);
   }
 
