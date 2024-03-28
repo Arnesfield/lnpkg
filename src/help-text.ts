@@ -8,12 +8,31 @@ import PKG from '../package.json' with { type: 'json' };
 const columns = 80;
 const optionsCols = 28;
 const descCols = columns - optionsCols;
+const newLineWhen = 1;
+
+function renderOption(option: string, description?: string) {
+  const spaceLength = option.startsWith('--') ? 6 : 2;
+  option = ' '.repeat(spaceLength) + option;
+
+  const longOption = option.length > optionsCols - newLineWhen;
+  option = option.padEnd(optionsCols, ' ');
+
+  return wrapAnsi(description || '', descCols)
+    .split('\n')
+    .map((part, index) => {
+      const main = index === 0 ? option + (longOption ? '\n' : '') : '';
+      const space = index !== 0 || longOption ? ' '.repeat(optionsCols) : '';
+      return main + space + part;
+    })
+    .join('\n');
+}
 
 export function helpText(): string {
   const opts = [
     {
       option: '-d, --dests <paths...>',
-      description: 'default destination package(s) to link source packages to'
+      description:
+        "default destination package(s) to link source packages to (default: '.')"
     },
     {
       option: '--dest <path>',
@@ -47,6 +66,10 @@ export function helpText(): string {
       description: 'log only without performing operations (noop)'
     },
     {
+      option: '-q, --quiet',
+      description: 'disable logging'
+    },
+    {
       option: '-f, --force',
       description:
         'allow un/link even if source package is not a dependency of destination package'
@@ -70,11 +93,6 @@ export function helpText(): string {
       description:
         'skip linking packages and watch package files for changes only'
     },
-
-    {
-      option: '-q, --quiet',
-      description: 'disable logging'
-    },
     {
       option: '--log-level <level>',
       description:
@@ -91,68 +109,72 @@ export function helpText(): string {
     }
   ];
 
+  const next = (() => {
+    function* generator() {
+      let count: number = yield null;
+      let index = 0;
+      while (true) {
+        const chunks = [];
+        while (chunks.length < count) {
+          chunks.push(opts[index]);
+          if (++index >= opts.length) {
+            index = 0;
+          }
+        }
+        count = yield chunks;
+      }
+    }
+    // first yield does not count (null)
+    const n = generator();
+    return (count: number) => n.next(count).value || n.next(count).value || [];
+  })();
+
+  const usageText = 'Usage:';
+  const usage = ' '.repeat(usageText.length + 1) + PKG.name + ' ';
+
   const output: string[] = [];
   output.push(PKG.description);
   output.push('');
-  output.push(`Usage: ${PKG.name} [paths...] [options]`);
+  output.push(
+    `${usageText} ${PKG.name} [-n|--dry-run] [src...] [options] [--] [src...]`
+  );
+  output.push(usage + '<src...> -d|--dests <dest...>');
+  output.push(usage + '<src...> --dest <dest1> [--dest <dest2>]');
+  output.push(
+    usage +
+      '-l|--link <src1...> -t|--to <dest1...> [-l <src2...> -t <dest2...>]'
+  );
+  output.push(usage + '-C|--cwd <path> ...');
+  output.push(
+    usage + "-c|--configs <[*.json...] [-] [*.json...]> # stdin '-' json format"
+  );
+  output.push(
+    usage + '--config <config1.json> [--config - --config <config3.json>]'
+  );
   output.push('');
-  output.push('Options:');
+  output.push('Arguments');
+  output.push(
+    renderOption(
+      '[src...]',
+      'paths of source packages to link to destination packages ' +
+        "(required only when '--link' and '--to' options are not used)"
+    )
+  );
   output.push('');
-  output.push('Package and path options');
-  let _curr = 0;
-  function next(count: number) {
-    const end = _curr + count;
-    const arr = opts.slice(_curr, end);
-    _curr = end;
-    return arr;
-  }
-  for (const o of next(2)) {
+  output.push('Link package options');
+  for (const o of next(7)) {
     output.push(renderOption(o.option, o.description));
   }
   output.push('');
-  for (const o of next(2)) {
-    output.push(renderOption(o.option, o.description));
-  }
-
-  output.push('');
-  for (const o of next(1)) {
+  output.push("Flags (use '--<flag>=0' or '--no-<flag>' to set to false)");
+  for (const o of next(7)) {
     output.push(renderOption(o.option, o.description));
   }
   output.push('');
-  for (const o of next(2)) {
-    output.push(renderOption(o.option, o.description));
-  }
-  output.push('');
-  output.push('Flags (set `<flag>=0` or use `--no-` prefix to negate)');
-  for (const o of next(6)) {
-    output.push(renderOption(o.option, o.description));
-  }
-  output.push('');
-  output.push('Logging options');
-  for (const o of next(2)) {
-    output.push(renderOption(o.option, o.description));
-  }
-  output.push('');
-  for (const o of next(2)) {
+  output.push('Output options');
+  for (const o of next(3)) {
     output.push(renderOption(o.option, o.description));
   }
 
   return output.join('\n');
-}
-
-function renderOption(option: string, description?: string) {
-  const spaceLength = option.startsWith('--') ? 6 : 2;
-  option = ' '.repeat(spaceLength) + option;
-
-  const longOption = option.length > optionsCols - 1;
-  option = option.padEnd(optionsCols, ' ');
-
-  return wrapAnsi(description || '', descCols)
-    .split('\n')
-    .map((part, index) => {
-      const main = index === 0 ? option + (longOption ? '\n' : '') : '';
-      const space = index !== 0 || longOption ? ' '.repeat(optionsCols) : '';
-      return main + space + part;
-    })
-    .join('\n');
 }
