@@ -18,8 +18,8 @@ const json = _json as unknown as typeof _json.default;
 const replace = _replace as unknown as typeof _replace.default;
 const typescript = _typescript as unknown as typeof _typescript.default;
 
+// const PROD = process.env.NODE_ENV !== 'development';
 const WATCH = process.env.ROLLUP_WATCH === 'true';
-const PROD = process.env.NODE_ENV !== 'development';
 const input = 'src/index.ts';
 
 function defineConfig(options: (false | RollupOptions)[]) {
@@ -76,7 +76,7 @@ export default defineConfig([
     output: { file: pkg.types, format: 'esm' },
     plugins: [dts(), externals(), outputSize()]
   },
-  !PROD && {
+  WATCH && {
     input,
     watch: { skipWrite: true },
     plugins: [eslint(), typescript(), json(), externals()]
