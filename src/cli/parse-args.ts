@@ -2,12 +2,16 @@ import { spec } from 'argstree';
 import { LnPkgOptions } from '../core/lnpkg.types.js';
 import { LOG_LEVEL } from '../helpers/logger.js';
 import * as PKG from '../package-json.js';
-import { ProgramInput } from './command.js';
 import { help } from './help.js';
 
 function parseBool(args: string[]) {
   const arg = args.length > 0 ? args[0] : null;
   return !arg || !['0', 'f'].includes(arg[0].toLowerCase());
+}
+
+export interface ProgramInput {
+  src: string[];
+  dest: string[];
 }
 
 export interface ProgramOptions extends Omit<LnPkgOptions, 'input' | 'dest'> {
