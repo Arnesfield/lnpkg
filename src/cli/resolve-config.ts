@@ -21,8 +21,8 @@ async function resolveConfig(cwd: string, config: string) {
     config === '-'
       ? await stdin()
       : typeof config === 'string'
-      ? await readFile(path.resolve(cwd, config))
-      : undefined;
+        ? await readFile(path.resolve(cwd, config))
+        : undefined;
   // eslint-disable-next-line no-cond-assign
   const options: LnPkgOptions = (json &&= json.trim()) ? JSON.parse(json) : {};
   // in case options is not a valid object
