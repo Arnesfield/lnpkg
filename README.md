@@ -39,7 +39,7 @@ import lnpkg from 'lnpkg';
 
 Use command (global install):
 
-```console
+```text
 $ lnpkg
 Link local Node.js packages.
 
