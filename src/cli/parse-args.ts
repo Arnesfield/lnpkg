@@ -49,7 +49,7 @@ export function parseArgs(args = process.argv.slice(2)): ProgramOptions {
   cmd
     .option('--help', {
       maxRead: 0,
-      validate: data => parseBool(data.args) && help()
+      validate: data => (parseBool(data.args) && help(), true)
     })
     .alias('-h');
   cmd.command('--', { strict: false });
