@@ -27,10 +27,12 @@ export interface PrefixOptions {
   message?: string;
 }
 
-export const LOG_LEVEL = (() => {
-  const levels = { info: 1, warn: 2, error: 3 } as const;
-  return Object.assign(Object.create(null) as typeof levels, levels);
-})();
+export const LOG_LEVEL = {
+  __proto__: null,
+  info: 1,
+  warn: 2,
+  error: 3
+} as const;
 
 export class Logger {
   private readonly color = colors();
