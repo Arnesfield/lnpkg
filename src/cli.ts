@@ -10,7 +10,7 @@ export async function cli(): Promise<void> {
     help();
   }
   try {
-    await lnpkg(await parseOptions(parseArgs()));
+    await lnpkg(await parseOptions(parseArgs(process.argv.slice(2))));
   } catch (error) {
     console.error(errorLog(error));
     process.exitCode = 1;

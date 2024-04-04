@@ -9,18 +9,18 @@ function parseBool(args: string[]) {
   return !arg || !['0', 'f'].includes(arg[0].toLowerCase());
 }
 
-export interface ProgramInput {
+export interface ParsedInput {
   src: string[];
   dest: string[];
 }
 
-export interface ProgramOptions extends Omit<LnPkgOptions, 'input' | 'dest'> {
-  input: (string | ProgramInput)[];
+export interface ParsedArgs extends Omit<LnPkgOptions, 'input' | 'dest'> {
+  input: (string | ParsedInput)[];
   dest?: string[];
   config?: string[];
 }
 
-export function parseArgs(args = process.argv.slice(2)): ProgramOptions {
+export function parseArgs(args: string[]): ParsedArgs {
   const cmd = spec({ min: 0, strict: true });
   cmd.option('--dest', { min: 1, max: 1 });
   cmd.option('--dests', { min: 1 }).alias('-d');
@@ -79,8 +79,8 @@ export function parseArgs(args = process.argv.slice(2)): ProgramOptions {
     process.exit(0);
   }
 
-  const options: ProgramOptions = { input: root.args.slice() };
-  let input: ProgramInput | undefined;
+  const options: ParsedArgs = { input: root.args.slice() };
+  let input: ParsedInput | undefined;
 
   for (const node of root.descendants) {
     const { id, args } = node;
