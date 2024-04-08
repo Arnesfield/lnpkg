@@ -1,6 +1,6 @@
 import chalk from 'chalk';
 import path from 'path';
-import stripAnsi from 'strip-ansi';
+import stringWidth from 'string-width';
 import util from 'util';
 import { Link } from '../core/link.js';
 import { LnPkgOptions } from '../core/lnpkg.types.js';
@@ -126,8 +126,7 @@ export class Logger {
     if (typeof this.line !== 'string' || !this.checkLevel(LOG_LEVEL.info)) {
       return;
     }
-    const log = stripAnsi(this.line);
-    const lines = Math.ceil(log.length / process.stdout.columns);
+    const lines = Math.ceil(stringWidth(this.line) / process.stdout.columns);
     // cursor up and start of lines
     // clear from cursor to end of screen
     process.stdout.write(`\x1b[${lines}F` + '\x1b[0J');
