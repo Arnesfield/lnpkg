@@ -66,10 +66,6 @@ export function helpText(): string {
       description: 'log only without performing operations (noop)'
     },
     {
-      option: '-q, --quiet',
-      description: 'disable logging'
-    },
-    {
       option: '-f, --force',
       description:
         'allow un/link even if source package is not a dependency of destination package'
@@ -92,6 +88,11 @@ export function helpText(): string {
       option: '-W, --watch-only',
       description:
         'skip linking packages and watch package files for changes only'
+    },
+    {
+      option: '-q, --quiet',
+      description:
+        "set log level to 'error' or set its default with '--no-quiet' flag"
     },
     {
       option: '--log-level <level>',
@@ -167,12 +168,12 @@ export function helpText(): string {
   }
   output.push('');
   output.push("Flags (use '--<flag>=0' or '--no-<flag>' to set to false)");
-  for (const o of next(7)) {
+  for (const o of next(6)) {
     output.push(renderOption(o.option, o.description));
   }
   output.push('');
   output.push('Output options');
-  for (const o of next(3)) {
+  for (const o of next(4)) {
     output.push(renderOption(o.option, o.description));
   }
 

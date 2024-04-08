@@ -91,8 +91,15 @@ export function parseArgs(args: string[]): ParsedArgs {
       case 'unlink':
       case 'watch':
       case 'watchOnly':
-      case 'quiet':
         options[id] = parseBool(args);
+        break;
+      case 'quiet':
+        // set or remove log level
+        if (parseBool(args)) {
+          options.logLevel = 'error';
+        } else {
+          delete options.logLevel;
+        }
         break;
       case '--dest':
       case '--dests':

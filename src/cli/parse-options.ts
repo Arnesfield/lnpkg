@@ -20,7 +20,6 @@ export async function parseOptions(args: ParsedArgs): Promise<LnPkgOptions> {
     options.dryRun ??= opts.dryRun;
     options.watch ??= opts.watch;
     options.watchOnly ??= opts.watchOnly;
-    options.quiet ??= opts.quiet;
     options.logLevel ??= opts.logLevel;
   }
   return options;

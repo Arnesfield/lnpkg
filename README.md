@@ -73,7 +73,6 @@ Link package options
 
 Flags (use '--<flag>=0' or '--no-<flag>' to set to false)
   -n, --dry-run             log only without performing operations (noop)
-  -q, --quiet               disable logging
   -f, --force               allow un/link even if source package is not a
                             dependency of destination package
   -s, --skip                skip un/link if source package is not a dependency
@@ -87,6 +86,8 @@ Flags (use '--<flag>=0' or '--no-<flag>' to set to false)
                             changes only
 
 Output options
+  -q, --quiet               set log level to 'error' or set its default with
+                            '--no-quiet' flag
       --log-level <level>   output logs only of equal or higher level ('info',
                             'warn', 'error', default: 'info')
   -v, --version             output the version number

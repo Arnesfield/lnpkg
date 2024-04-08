@@ -78,10 +78,6 @@ export interface LnPkgOptions extends ScopedOptions {
    */
   watchOnly?: boolean;
   /**
-   * Disable logging.
-   */
-  quiet?: boolean;
-  /**
    * Output logs only of equal or higher level.
    * @default 'info'
    */
