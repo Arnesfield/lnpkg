@@ -60,7 +60,7 @@
     "minimatch": "^9.0.4",
     "npm-packlist": "^8.0.2",
     "pretty-ms": "^9.0.0",
-    "strip-ansi": "^7.1.0"
+    "string-width": "^7.1.0"
   },
   "devDependencies": {
     "@isaacs/cliui": "^8.0.2",
