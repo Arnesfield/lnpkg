@@ -2,30 +2,8 @@
 // for some reason, json plugin does not work for this
 // so import package.json directly
 
-import wrapAnsi from 'wrap-ansi';
+import _cliui from '@isaacs/cliui';
 import PKG from '../package.json' with { type: 'json' };
-
-const columns = 80;
-const optionsCols = 28;
-const descCols = columns - optionsCols;
-const newLineWhen = 1;
-
-function renderOption(option: string, description?: string) {
-  const spaceLength = option.startsWith('--') ? 6 : 2;
-  option = ' '.repeat(spaceLength) + option;
-
-  const longOption = option.length > optionsCols - newLineWhen;
-  option = option.padEnd(optionsCols, ' ');
-
-  return wrapAnsi(description || '', descCols)
-    .split('\n')
-    .map((part, index) => {
-      const main = index === 0 ? option + (longOption ? '\n' : '') : '';
-      const space = index !== 0 || longOption ? ' '.repeat(optionsCols) : '';
-      return main + space + part;
-    })
-    .join('\n');
-}
 
 export function helpText(): string {
   const opts = [
@@ -89,6 +67,7 @@ export function helpText(): string {
       description:
         'skip linking packages and watch package files for changes only'
     },
+
     {
       option: '-q, --quiet',
       description:
@@ -99,7 +78,6 @@ export function helpText(): string {
       description:
         "output logs only of equal or higher level ('info', 'warn', 'error', default: 'info')"
     },
-
     {
       option: '-v, --version',
       description: 'output the version number'
@@ -130,52 +108,76 @@ export function helpText(): string {
     return (count: number) => n.next(count).value || n.next(count).value || [];
   })();
 
+  const optionsMaxWidth = 28;
+  // NOTE: remove once import errors are fixed
+  const cliui = _cliui as unknown as typeof _cliui.default;
+  const ui = cliui({ width: 80 });
+
+  function renderOption(option: string, description: string) {
+    // for very options that exceed max column size,
+    // separate description into another line
+    const longPadding = option.startsWith('--') ? 4 : 0;
+    const padding = [0, 2, 0, 2 + longPadding];
+    const width = padding.reduce((total, pad) => total + pad, option.length);
+    if (width > optionsMaxWidth) {
+      ui.div({ text: option, width, padding });
+      ui.div({ text: description, padding: [0, 0, 0, optionsMaxWidth] });
+    } else {
+      ui.div(
+        { text: option, width: optionsMaxWidth, padding },
+        { text: description, padding: [] }
+      );
+    }
+  }
+
+  // description
+  ui.div(PKG.description);
+
+  // usages
   const usageText = 'Usage:';
-  const usage = ' '.repeat(usageText.length + 1) + PKG.name + ' ';
+  const usageWidth = usageText.length + 1;
+  const usages = [
+    '[-n|--dry-run] [src...] [options] [--] [src...]',
+    '<src...> -d|--dests <dest...>',
+    '<src...> --dest <dest1> [--dest <dest2>]',
+    '-l|--link <src1...> -t|--to <dest1...> [-l <src2...> -t <dest2...>]',
+    '-C|--cwd <path> ...',
+    "-c|--configs <[*.json...] [-] [*.json...]> # stdin '-' json format",
+    '--config <config1.json> [--config - --config <config3.json>]'
+  ].map(usage => `${PKG.name} ${usage}`);
+  ui.div();
+  usages.forEach((usage, index) => {
+    ui.div(
+      { text: index === 0 ? usageText : '', width: usageWidth, padding: [] },
+      { text: usage, padding: [] }
+    );
+  });
 
-  const output: string[] = [];
-  output.push(PKG.description);
-  output.push('');
-  output.push(
-    `${usageText} ${PKG.name} [-n|--dry-run] [src...] [options] [--] [src...]`
+  // arguments
+  ui.div();
+  ui.div('Arguments');
+  renderOption(
+    '[src...]',
+    'paths of source packages to link to destination packages ' +
+      "(required only when '--link' and '--to' options are not used)"
   );
-  output.push(usage + '<src...> -d|--dests <dest...>');
-  output.push(usage + '<src...> --dest <dest1> [--dest <dest2>]');
-  output.push(
-    usage +
-      '-l|--link <src1...> -t|--to <dest1...> [-l <src2...> -t <dest2...>]'
-  );
-  output.push(usage + '-C|--cwd <path> ...');
-  output.push(
-    usage + "-c|--configs <[*.json...] [-] [*.json...]> # stdin '-' json format"
-  );
-  output.push(
-    usage + '--config <config1.json> [--config - --config <config3.json>]'
-  );
-  output.push('');
-  output.push('Arguments');
-  output.push(
-    renderOption(
-      '[src...]',
-      'paths of source packages to link to destination packages ' +
-        "(required only when '--link' and '--to' options are not used)"
-    )
-  );
-  output.push('');
-  output.push('Link package options');
+
+  // options
+  ui.div();
+  ui.div('Link package options');
   for (const o of next(7)) {
-    output.push(renderOption(o.option, o.description));
+    renderOption(o.option, o.description);
   }
-  output.push('');
-  output.push("Flags (use '--<flag>=0' or '--no-<flag>' to set to false)");
+  ui.div();
+  ui.div("Flags (use '--<flag>=0' or '--no-<flag>' to set to false)");
   for (const o of next(6)) {
-    output.push(renderOption(o.option, o.description));
+    renderOption(o.option, o.description);
   }
-  output.push('');
-  output.push('Output options');
+  ui.div();
+  ui.div('Output options');
   for (const o of next(4)) {
-    output.push(renderOption(o.option, o.description));
+    renderOption(o.option, o.description);
   }
 
-  return output.join('\n');
+  return ui.toString();
 }

@@ -44,11 +44,11 @@ export default defineConfig([
           preventAssignment: true,
           'process.env.HELP': JSON.stringify(helpText())
         }),
-      // remove dangling wrap-ansi import
+      // remove dangling @isaacs/cliui import
       // once it's replaced with the generated help text
       edit({
         chunk(data) {
-          const pkg = 'wrap-ansi';
+          const pkg = '@isaacs/cliui';
           const match = `import '${pkg}';\n`;
           if (data.contents.includes(match)) {
             console.log(
@@ -65,9 +65,9 @@ export default defineConfig([
         extensions: ['js', 'ts']
       }),
       json(),
-      // explicitly treat wrap-ansi as external
+      // explicitly treat @isaacs/cliui as external
       // other external dev deps may be a mistake
-      externals({ include: ['wrap-ansi'] }),
+      externals({ include: ['@isaacs/cliui'] }),
       outputSize()
     ]
   },
