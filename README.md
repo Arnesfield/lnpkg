@@ -86,12 +86,11 @@ Flags (use '--<flag>=0' or '--no-<flag>' to set to false)
                             changes only
 
 Output options
-  -q, --quiet               set log level to 'error' or set its default with
-                            '--no-quiet' flag
+  -q, --quiet               set '--log-level' to 'error'
       --log-level <level>   output logs only of equal or higher level ('info',
                             'warn', 'error', default: 'info')
-  -v, --version             output the version number
-  -h, --help                display help for command
+  -v, --version             display version information
+  -h, --help                display this help text
 ```
 
 ## License
