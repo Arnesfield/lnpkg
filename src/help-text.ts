@@ -38,7 +38,7 @@ export function helpText(): string {
       option: '--config <path>',
       description: "similar to '--configs' but accepts one value at a time"
     },
-
+    //
     {
       option: '-n, --dry-run',
       description: 'log only without performing operations (noop)'
@@ -67,25 +67,15 @@ export function helpText(): string {
       description:
         'skip linking packages and watch package files for changes only'
     },
-
-    {
-      option: '-q, --quiet',
-      description:
-        "set log level to 'error' or set its default with '--no-quiet' flag"
-    },
+    //
+    { option: '-q, --quiet', description: "set '--log-level' to 'error'" },
     {
       option: '--log-level <level>',
       description:
         "output logs only of equal or higher level ('info', 'warn', 'error', default: 'info')"
     },
-    {
-      option: '-v, --version',
-      description: 'output the version number'
-    },
-    {
-      option: '-h, --help',
-      description: 'display help for command'
-    }
+    { option: '-v, --version', description: 'display version information' },
+    { option: '-h, --help', description: 'display this help text' }
   ];
 
   const next = (() => {
