@@ -1,10 +1,10 @@
 import Arborist from '@npmcli/arborist';
 import { PackageJson } from '@npmcli/package-json';
+import isPathInside from 'is-path-inside';
 import { minimatch } from 'minimatch';
 import packlist from 'npm-packlist';
 import path from 'path';
 import { absolute } from '../utils/path.utils.js';
-import { isPathDescendant } from '../utils/simplify-paths.js';
 import { loadNode } from './load-node.js';
 import { PackageFile } from './package.types.js';
 
@@ -112,7 +112,7 @@ export class Package {
     filePath = absolute(filePath, this.path);
     if (this.fileLookup[filePath]) {
       return true;
-    } else if (!isPathDescendant(this.path, filePath)) {
+    } else if (!isPathInside(filePath, this.path)) {
       return false;
     }
     // make sure file is not part of direct node_modules

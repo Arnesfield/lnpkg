@@ -1,12 +1,12 @@
 import { FSWatcher, watch as chokidarWatch } from 'chokidar';
 import throttle from 'lodash.throttle';
 import path from 'path';
+import collapse from 'path-collapse';
 import { RunItem, runItem } from '../helpers/run-item.js';
 import { Package } from '../package/package.js';
 import { PackageFile } from '../package/package.types.js';
 import { Batch } from '../utils/batch.js';
 import { Queue } from '../utils/queue.js';
-import { simplifyPaths } from '../utils/simplify-paths.js';
 import { Link } from './link.js';
 import { RunType, Runner } from './runner.js';
 
@@ -64,13 +64,12 @@ export function watch(links: Link[], runner: Runner): FSWatcher {
         typeBatch.add(type, item.file);
       }
       for (const [type, files] of typeBatch.flush()) {
-        // simplify paths to merge them with directory paths
-        const simplified = simplifyPaths(files.map(file => file.path));
-        const roots = files.filter(file => simplified.map[file.path] === null);
-        if (roots.length === 0) {
-          continue;
+        // collapse paths to merge them with directory paths
+        const collapsed = collapse(files.map(file => file.path));
+        const roots = files.filter(file => file.path in collapsed.roots);
+        if (roots.length > 0) {
+          run.push({ type, package: pkg, files: roots });
         }
-        run.push({ type, package: pkg, files: roots });
       }
     }
     return run;
