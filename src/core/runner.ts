@@ -124,14 +124,16 @@ export class Runner {
     const promises = files.map(async file => {
       const destFilePath = link.getDestPath(file.filePath);
       try {
-        if (!dryRun) {
-          // check if path exists first
+        if (dryRun) {
+          // do nothing
+        } else if (type === 'copy') {
+          // check if path exists when copying only
           await fs.promises.lstat(file.path);
-          if (type === 'copy') {
-            await cp(file.path, destFilePath);
-          } else {
-            await rm(destFilePath);
-          }
+          await cp(file.path, destFilePath);
+        } else {
+          // remove without checking if the original source path
+          // exists since it may have been removed already
+          await rm(destFilePath);
         }
         count.done++;
       } catch (error) {
