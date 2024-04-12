@@ -2,15 +2,13 @@
  * Get input from stdin.
  * @returns The input value.
  */
-export function stdin(): Promise<string> {
-  return new Promise((resolve, reject) => {
-    // NOTE: taken from https://stackoverflow.com/a/16351842/7013346
-    const chunks: string[] = [];
-    process
-      .openStdin()
-      .setEncoding('utf8')
-      .on('data', chunk => chunks.push(chunk))
-      .on('error', reject)
-      .on('end', () => resolve(chunks.join('')));
-  });
+export async function stdin(): Promise<string> {
+  // NOTE: taken from:
+  // https://github.com/sindresorhus/get-stdin
+  // https://stackoverflow.com/a/16351842/7013346
+  let result = '';
+  for await (const chunk of process.stdin.setEncoding('utf8')) {
+    result += chunk;
+  }
+  return result;
 }
