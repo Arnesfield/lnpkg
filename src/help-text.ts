@@ -104,7 +104,7 @@ export function helpText(): string {
   const ui = cliui({ width: 80 });
 
   function renderOption(option: string, description: string) {
-    // for very options that exceed max column size,
+    // for every option that exceeds max column size,
     // separate description into another line
     const longPadding = option.startsWith('--') ? 4 : 0;
     const padding = [0, 2, 0, 2 + longPadding];

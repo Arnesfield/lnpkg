@@ -49,7 +49,7 @@ export function parseArgs(args: string[]): ParsedArgs {
   cmd
     .option('--help', {
       maxRead: 0,
-      validate: data => (parseBool(data.args) && help(), true)
+      validate: data => parseBool(data.args) && help()
     })
     .alias('-h');
   cmd.command('--', { strict: false });
