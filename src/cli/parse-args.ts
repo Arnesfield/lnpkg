@@ -76,7 +76,7 @@ export function parseArgs(args: string[]): ParsedArgs {
   const versionNode = root.descendants.find(node => node.id === '--version');
   if (versionNode && parseBool(versionNode.args)) {
     console.log('v%s', PKG.version);
-    process.exit(0);
+    process.exit();
   }
 
   const options: ParsedArgs = { input: root.args.slice() };
