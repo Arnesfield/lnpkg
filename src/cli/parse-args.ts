@@ -1,12 +1,14 @@
-import { spec } from 'argstree';
+import command from 'argstree';
 import { LnPkgOptions } from '../core/lnpkg.types.js';
 import { LOG_LEVEL } from '../helpers/logger.js';
 import * as PKG from '../package-json.js';
 import { help } from './help.js';
 
 function parseBool(args: string[]) {
-  const arg = args.length > 0 ? args[0] : null;
-  return !arg || !['0', 'f'].includes(arg[0].toLowerCase());
+  const l = args.length;
+  const bool = l === 0 || args[l - 1][0] !== '0';
+  // negate if arg was not from index 0
+  return l > 1 !== bool;
 }
 
 export interface ParsedInput {
@@ -20,69 +22,66 @@ export interface ParsedArgs extends Omit<LnPkgOptions, 'input' | 'dest'> {
   config?: string[];
 }
 
-export function parseArgs(args: string[]): ParsedArgs {
-  const cmd = spec({ min: 0, strict: true });
-  cmd.option('--dest', { min: 1, max: 1 });
-  cmd.option('--dests', { min: 1 }).alias('-d');
-  cmd.option('--link', { min: 1 }).alias('-l');
-  cmd.option('--to', { min: 1 }).alias('-t');
-  cmd.option('--cwd', { min: 1, max: 1 }).alias('-C');
-  cmd.option('--config', { min: 1, max: 1 });
-  cmd.option('--configs', { min: 1 }).alias('-c');
-  cmd.option('--log-level', {
-    min: 1,
-    max: 1,
-    validate(data) {
-      const value = data.args[0];
-      if (!(value in LOG_LEVEL)) {
-        const logLevels = Object.keys(LOG_LEVEL)
-          .map(level => `'${level}'`)
-          .join(', ');
-        throw new Error(
-          `Option '--log-level' argument '${value}' is invalid. Allowed choices are: ${logLevels}`
-        );
+export function parseArgs(argv: string[]): ParsedArgs {
+  const cmd = command({ strict: true })
+    .option('--dest', { min: 1, max: 1 })
+    .option('--dests', { min: 1, alias: '-d' })
+    .option('--link', { min: 1, alias: '-l' })
+    .option('--to', { min: 1, alias: '-t' })
+    .option('--cwd', { min: 1, max: 1, alias: '-C' })
+    .option('--config', { min: 1, max: 1 })
+    .option('--configs', { min: 1, alias: '-c' })
+    .option('--log-level', {
+      min: 1,
+      max: 1,
+      onValidate(node) {
+        const value = node.args[0];
+        if (!(value in LOG_LEVEL)) {
+          throw new Error(
+            `Option '${node.key}' argument '${value}' is invalid. ` +
+              'Allowed choices are: ' +
+              Object.keys(LOG_LEVEL)
+                .map(level => `'${level}'`)
+                .join(', ')
+          );
+        }
       }
-      return true;
-    }
-  });
-  cmd.option('--version', { maxRead: 0 }).alias('-v');
-  cmd
-    .option('--help', {
-      maxRead: 0,
-      validate: data => parseBool(data.args) && help()
     })
-    .alias('-h');
-  cmd.command('--', { strict: false });
+    .option('--dry-run', {
+      id: 'dryRun',
+      read: false,
+      alias: ['-n', ['--no-dry-run', '0']]
+    })
+    .option('--watch-only', {
+      id: 'watchOnly',
+      read: false,
+      alias: ['-W', ['--no-watch-only', '0']]
+    })
+    .option('--version', {
+      alias: '-v',
+      assign: false,
+      onBeforeValidate() {
+        console.log('v%s', PKG.version);
+        process.exit();
+      }
+    })
+    .option('--help', { alias: '-h', assign: false, onCreate: help })
+    .command('--', { strict: false });
 
   // flags / booleans
-  const bools = ['force', 'skip', 'unlink', 'watch', 'quiet'] as const;
-  for (const bool of bools) {
-    cmd
-      .option(`--${bool}`, { id: bool, maxRead: 0 })
-      .alias(`-${bool[0]}`)
-      .alias(`--no-${bool}`, '0');
-  }
-  cmd
-    .option('--dry-run', { id: 'dryRun', maxRead: 0 })
-    .alias('-n')
-    .alias('--no-dry-run', '0');
-  cmd
-    .option('--watch-only', { id: 'watchOnly', maxRead: 0 })
-    .alias('-W')
-    .alias('--no-watch-only', '0');
-
-  const root = cmd.parse(args);
-  // output version
-  const versionNode = root.descendants.find(node => node.id === '--version');
-  if (versionNode && parseBool(versionNode.args)) {
-    console.log('v%s', PKG.version);
-    process.exit();
+  for (const bool of ['force', 'skip', 'unlink', 'watch', 'quiet']) {
+    cmd.option(`--${bool}`, {
+      id: bool,
+      read: false,
+      alias: [`-${bool[0]}`, [`--no-${bool}`, '0']]
+    });
   }
 
+  const root = cmd.parse(argv);
   const options: ParsedArgs = { input: root.args.slice() };
   let input: ParsedInput | undefined;
 
-  for (const node of root.descendants) {
+  for (const node of root.children) {
     const { id, args } = node;
     switch (id) {
       case 'dryRun':
@@ -126,7 +125,7 @@ export function parseArgs(args: string[]): ParsedArgs {
         (options.config ||= []).push(...args);
         break;
       case '--log-level':
-        options.logLevel = args[0] as typeof options.logLevel;
+        options.logLevel = args[0] as NonNullable<ParsedArgs['logLevel']>;
         break;
       case '--':
         options.input.push(...args);
