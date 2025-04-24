@@ -114,9 +114,7 @@ export function parseArgs(args: string[]): ParsedArgs {
         break;
       case '--to':
         if (!input || input.src.length === 0) {
-          throw new Error(
-            "Missing option '-l, --link' before option '-t, --to'"
-          );
+          throw new Error("Missing option '--link' before option '--to'.");
         }
         input.dest.push(...args);
         break;
@@ -138,7 +136,7 @@ export function parseArgs(args: string[]): ParsedArgs {
 
   // make sure inputs have sources
   if (input && input.dest.length === 0) {
-    throw new Error("Missing option '-t, --to' after option '-l, --link'");
+    throw new Error("Missing option '--to' after option '--link'.");
   }
   return options;
 }
