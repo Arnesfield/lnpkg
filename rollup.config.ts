@@ -1,13 +1,11 @@
 import _eslint from '@rollup/plugin-eslint';
 import _json from '@rollup/plugin-json';
-import _replace from '@rollup/plugin-replace';
 import _typescript from '@rollup/plugin-typescript';
 import { RollupOptions } from 'rollup';
 import cleanup from 'rollup-plugin-cleanup';
 import dts from 'rollup-plugin-dts';
-import edit from 'rollup-plugin-edit';
 import esbuild from 'rollup-plugin-esbuild';
-import externals from 'rollup-plugin-node-externals';
+import nodeExternals from 'rollup-plugin-node-externals';
 import outputSize from 'rollup-plugin-output-size';
 import pkg from './package.json' with { type: 'json' };
 import { helpText } from './src/help-text.js';
@@ -15,7 +13,6 @@ import { helpText } from './src/help-text.js';
 // NOTE: remove once import errors are fixed for their respective packages
 const eslint = _eslint as unknown as typeof _eslint.default;
 const json = _json as unknown as typeof _json.default;
-const replace = _replace as unknown as typeof _replace.default;
 const typescript = _typescript as unknown as typeof _typescript.default;
 
 // const PROD = process.env.NODE_ENV !== 'development';
@@ -33,52 +30,38 @@ export default defineConfig([
       dir: 'lib',
       format: 'esm',
       exports: 'named',
-      chunkFileNames: '[name].js'
+      chunkFileNames: '[name].js',
+      manualChunks: { lnpkg: [input] }
     },
+    // ensures that '@isaacs/cliui' import is removed when help text is defined
+    treeshake: { moduleSideEffects: 'no-external' },
     plugins: [
-      esbuild({ target: 'esnext' }),
-      // only replace help text when not watching to properly
-      // update help-text.ts contents during development
-      !WATCH &&
-        replace({
-          preventAssignment: true,
-          'process.env.HELP': JSON.stringify(helpText())
-        }),
-      // remove dangling @isaacs/cliui import
-      // once it's replaced with the generated help text
-      edit({
-        chunk(data) {
-          const pkg = '@isaacs/cliui';
-          const match = `import '${pkg}';\n`;
-          if (data.contents.includes(match)) {
-            console.log(
-              '[edit] Removing %o import for %o.',
-              pkg,
-              data.fileName
-            );
-            return data.contents.replace(match, '');
-          }
-        }
+      esbuild({
+        target: 'esnext',
+        // only replace help text when not watching to properly
+        // update help-text.ts contents during development
+        define: !WATCH
+          ? { 'process.env.HELP': JSON.stringify(helpText()) }
+          : undefined
       }),
       cleanup({
         comments: ['some', 'sources', /__PURE__/],
         extensions: ['js', 'ts']
       }),
       json(),
-      // explicitly treat @isaacs/cliui as external
-      // other external dev deps may be a mistake
-      externals({ include: ['@isaacs/cliui'] }),
+      // explicitly treat '@isaacs/cliui' dev dependency as external
+      nodeExternals({ include: ['@isaacs/cliui'] }),
       outputSize()
     ]
   },
   {
     input,
     output: { file: pkg.types, format: 'esm' },
-    plugins: [dts(), externals(), outputSize()]
+    plugins: [dts(), nodeExternals(), outputSize()]
   },
   WATCH && {
     input,
     watch: { skipWrite: true },
-    plugins: [eslint(), typescript(), json(), externals()]
+    plugins: [eslint(), typescript(), json(), nodeExternals()]
   }
 ]);
