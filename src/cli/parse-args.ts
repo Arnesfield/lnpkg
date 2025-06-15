@@ -35,8 +35,8 @@ export function parseArgs(argv: string[]): ParsedArgs {
       min: 1,
       max: 1,
       onValidate(node) {
-        const value = node.args[0];
-        if (!(value in LOG_LEVEL)) {
+        const value = node.args[0] as keyof typeof LOG_LEVEL;
+        if (!LOG_LEVEL[value]) {
           throw new Error(
             `Option '${node.key}' argument '${value}' is invalid. ` +
               'Allowed choices are: ' +

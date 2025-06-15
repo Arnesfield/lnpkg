@@ -65,7 +65,7 @@ export function watch(links: Link[], runner: Runner): FSWatcher {
       for (const [type, files] of typeBatch.flush()) {
         // collapse paths to merge them with directory paths
         const collapsed = collapse(files.map(file => file.path));
-        const roots = files.filter(file => file.path in collapsed.roots);
+        const roots = files.filter(file => collapsed.roots[file.path]);
         if (roots.length > 0) {
           run.push({ type, package: pkg, files: roots });
         }
@@ -110,9 +110,7 @@ export function watch(links: Link[], runner: Runner): FSWatcher {
   ).on('all', (event, path) => {
     // TODO: handle 'all', 'ready', 'raw', 'error'
     // remove to update key value order
-    if (path in watchMap) {
-      delete watchMap[path];
-    }
+    if (watchMap[path]) delete watchMap[path];
     watchMap[path] = event;
     processWatch();
   });
