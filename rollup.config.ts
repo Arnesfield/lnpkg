@@ -1,6 +1,6 @@
-import _eslint from '@rollup/plugin-eslint';
-import _json from '@rollup/plugin-json';
-import _typescript from '@rollup/plugin-typescript';
+import eslint from '@rollup/plugin-eslint';
+import json from '@rollup/plugin-json';
+import typescript from '@rollup/plugin-typescript';
 import { RollupOptions } from 'rollup';
 import cleanup from 'rollup-plugin-cleanup';
 import dts from 'rollup-plugin-dts';
@@ -9,11 +9,6 @@ import nodeExternals from 'rollup-plugin-node-externals';
 import outputSize from 'rollup-plugin-output-size';
 import pkg from './package.json' with { type: 'json' };
 import { helpText } from './src/help-text.js';
-
-// NOTE: remove once import errors are fixed for their respective packages
-const eslint = _eslint as unknown as typeof _eslint.default;
-const json = _json as unknown as typeof _json.default;
-const typescript = _typescript as unknown as typeof _typescript.default;
 
 // const PROD = process.env.NODE_ENV !== 'development';
 const WATCH = process.env.ROLLUP_WATCH === 'true';
@@ -51,13 +46,13 @@ export default defineConfig([
       json(),
       // explicitly treat '@isaacs/cliui' dev dependency as external
       nodeExternals({ include: ['@isaacs/cliui'] }),
-      outputSize()
+      outputSize({ bytes: true })
     ]
   },
   {
     input,
     output: { file: pkg.types, format: 'esm' },
-    plugins: [dts(), nodeExternals(), outputSize()]
+    plugins: [dts(), nodeExternals(), outputSize({ bytes: true })]
   },
   WATCH && {
     input,
