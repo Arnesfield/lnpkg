@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import { FSWatcher } from 'chokidar';
 import { getEntries } from '../helpers/get-entries.js';
 import { Logger } from '../helpers/logger.js';
 import { scopeOptions } from '../helpers/scope-options.js';
@@ -8,7 +7,7 @@ import { errorLog } from '../utils/error.js';
 import { pluralize } from '../utils/pluralize.js';
 import { Timer } from '../utils/timer.js';
 import { Link } from './link.js';
-import { LnPkg, LnPkgOptions } from './lnpkg.types.js';
+import { LnPkgOptions } from './lnpkg.types.js';
 import { Manager } from './manager.js';
 import { Runner } from './runner.js';
 import { watch } from './watch.js';
@@ -16,9 +15,8 @@ import { watch } from './watch.js';
 /**
  * Link local Node.js packages.
  * @param options Link package options.
- * @returns The LnPkg object.
  */
-export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
+export async function lnpkg(options: LnPkgOptions): Promise<void> {
   options = { ...options };
   // default to current directory
   options.dest = ensureArray(options.dest);
@@ -68,29 +66,19 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
     }
   }
 
-  // NOTE: exposing lnpkg object means that the
-  // referenced objects are kept in memory (probably)
-  let watcher: FSWatcher | undefined;
-  const lnpkg: LnPkg = {
-    stats: () => ({ ...manager.stats(), ...logger.stats }),
-    isWatching: () => !!watcher,
-    async close() {
-      await watcher?.close();
-      watcher = undefined;
-    }
-  };
+  const s1 = manager.stats();
+  const s2 = logger.stats;
 
-  const s = lnpkg.stats();
   logger.log(
     { app: true, message: 'Found %o %s, %o %s (%o %s, %o %s) in' },
-    s.packages,
-    pluralize('package', s.packages),
-    s.links,
-    pluralize('link', s.links),
-    s.errors,
-    pluralize('error', s.errors),
-    s.warnings,
-    pluralize('warning', s.warnings),
+    s1.packages,
+    pluralize('package', s1.packages),
+    s1.links,
+    pluralize('link', s1.links),
+    s2.errors,
+    pluralize('error', s2.errors),
+    s2.warnings,
+    pluralize('warning', s2.warnings),
     chalk.yellow(timer.diff('main'))
   );
 
@@ -104,8 +92,8 @@ export async function lnpkg(options: LnPkgOptions): Promise<LnPkg> {
       })
     : [];
   if (watchLinks.length > 0) {
-    watcher = watch(watchLinks, runner);
+    // ignore watcher?
+    watch(watchLinks, runner);
     logger.log({ app: true }, 'Watching for package file changes.');
   }
-  return lnpkg;
 }
