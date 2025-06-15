@@ -1,6 +1,3 @@
-[npm-img]: https://img.shields.io/npm/v/lnpkg.svg
-[npm-url]: https://www.npmjs.com/package/lnpkg
-
 > [!CAUTION]
 >
 > **_This is an alpha version of the package: currently untested and is considered unstable. Usage and API may change at any time. Use at your own risk._**
@@ -8,6 +5,9 @@
 # lnpkg
 
 [![npm][npm-img]][npm-url]
+
+[npm-img]: https://img.shields.io/npm/v/lnpkg.svg
+[npm-url]: https://www.npmjs.com/package/lnpkg
 
 Link local Node.js packages.
 
@@ -17,27 +17,19 @@ Link local Node.js packages.
 
 ## Install
 
-Install globally for `lnpkg` command:
+Run via `npx`:
 
 ```sh
-npm install -g lnpkg
+npx lnpkg
 ```
 
-Or install as a dependency to use as a module:
+Or install globally via `npm`:
 
 ```sh
-npm install lnpkg --save-dev
+npm install --global lnpkg
 ```
 
 ## Usage
-
-Import module (dependency install):
-
-```javascript
-import lnpkg from 'lnpkg';
-```
-
-Use command (global install):
 
 ```text
 $ lnpkg
