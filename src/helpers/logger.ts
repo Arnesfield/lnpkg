@@ -39,7 +39,6 @@ export class Logger {
 
   constructor(options: Pick<LnPkgOptions, 'logLevel'>) {
     // default to info
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     this.level = LOG_LEVEL[options.logLevel!] ?? 1;
   }
 

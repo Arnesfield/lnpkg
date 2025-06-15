@@ -1,4 +1,5 @@
 import { FSWatcher, watch as chokidarWatch } from 'chokidar';
+import { EventName } from 'chokidar/handler.js';
 import throttle from 'lodash.throttle';
 import path from 'path';
 import collapse from 'path-collapse';
@@ -9,8 +10,6 @@ import { Batch } from '../utils/batch.js';
 import { Queue } from '../utils/queue.js';
 import { Link } from './link.js';
 import { RunType, Runner } from './runner.js';
-
-type EventName = 'add' | 'addDir' | 'change' | 'unlink' | 'unlinkDir';
 
 interface WatchQueueItem {
   path: string;
@@ -107,8 +106,9 @@ export function watch(links: Link[], runner: Runner): FSWatcher {
 
   return chokidarWatch(
     links.map(link => link.src.path),
-    { ignoreInitial: true, disableGlobbing: true }
+    { ignoreInitial: true }
   ).on('all', (event, path) => {
+    // TODO: handle 'all', 'ready', 'raw', 'error'
     // remove to update key value order
     if (path in watchMap) {
       delete watchMap[path];

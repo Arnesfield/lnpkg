@@ -1,8 +1,8 @@
 // NOTE: GENERATE HELP TEXT TO BE REPLACED IN BUILD.
-// for some reason, json plugin does not work for this
-// so import package.json directly
+// import package.json directly since this file
+// is imported in rollup.config.ts which also imports package.json
 
-import _cliui from '@isaacs/cliui';
+import cliui from '@isaacs/cliui';
 import PKG from '../package.json' with { type: 'json' };
 
 export function helpText(): string {
@@ -99,8 +99,6 @@ export function helpText(): string {
   })();
 
   const optionsMaxWidth = 28;
-  // NOTE: remove once import errors are fixed
-  const cliui = _cliui as unknown as typeof _cliui.default;
   const ui = cliui({ width: 80 });
 
   function renderOption(option: string, description: string) {

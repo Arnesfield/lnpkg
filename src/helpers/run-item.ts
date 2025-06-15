@@ -47,7 +47,6 @@ export async function runItem(
       await runner.reinit({ link, prefix });
     }
     if (runner.checkLink(link, prefix)) {
-      // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       const files = cachedFiles[link.src.path]!;
       await runner.refresh({ link, files, prefix });
     }
