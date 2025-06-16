@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@npmcli/arborist": "^9.1.2",
-    "argstree": "^2.0.0-alpha.1",
+    "argstree": "^2.0.0-alpha.2",
     "chalk": "^5.4.1",
     "chokidar": "^4.0.3",
     "glob": "^11.0.3",
@@ -70,7 +70,7 @@
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-typescript": "^12.1.2",
     "@types/lodash.throttle": "^4.1.9",
-    "@types/node": "^24.0.1",
+    "@types/node": "^24.0.2",
     "@types/npm-packlist": "^7.0.3",
     "@types/npmcli__arborist": "^6.3.0",
     "@types/npmcli__package-json": "^4.0.4",
